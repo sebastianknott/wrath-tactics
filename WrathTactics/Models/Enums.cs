@@ -59,7 +59,8 @@ namespace WrathTactics.Models {
         AbilityDamage,            // Yes/No — any of the six ability scores carries Damage (Str/Dex/Con/Int/Wis/Cha); for Restoration / Lesser Restoration rules. Drain not counted.
         NegativeLevels,           // Yes/No — UnitPartNegativeLevels.Count > 0 (temporary + permanent energy drain); for Restoration rules.
         HpFlat,                   // numeric — current hit points, flat (HPLeft = HitPoints.ModifiedValue − Damage; temp HP excluded, same expression as the engine's AbilityTargetHPCondition Power-Word gate)
-        WieldsRangedWeapon        // Yes/No — current weapon is ranged (GetFirstWeapon → Blueprint.IsRanged, i.e. AttackType Ranged/RangedTouch); for "focus the archers" rules
+        WieldsRangedWeapon,       // Yes/No — current weapon is ranged (GetFirstWeapon → Blueprint.IsRanged, i.e. AttackType Ranged/RangedTouch); for "focus the archers" rules
+        IsDowned                  // Yes/No — felled in combat but not finally dead (LifeState==Dead && !IsFinallyDead; red portrait, auto-revives after combat); Unconscious/Death's Door not counted. IsDead stays IsFinallyDead.
     }
 
     public enum ConditionOperator {

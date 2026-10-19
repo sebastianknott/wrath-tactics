@@ -218,9 +218,10 @@ namespace WrathTactics.UI {
                         });
                     }
                 } else {
-                    // Bool props (IsDead/IsSummon/IsPet/etc.): Yes/No dropdown for both Count
+                    // Bool props (IsDead/IsDowned/IsSummon/IsPet/etc.): Yes/No dropdown for both Count
                     // and AllyByName subjects. Free-text fallback covers anything not classified.
                     bool isBool = condition.Property == ConditionProperty.IsDead
+                        || condition.Property == ConditionProperty.IsDowned
                         || condition.Property == ConditionProperty.IsInCombat
                         || condition.Property == ConditionProperty.IsTargetingSelf
                         || condition.Property == ConditionProperty.IsTargetingAlly
@@ -260,6 +261,7 @@ namespace WrathTactics.UI {
                     || condition.Property == ConditionProperty.ImmuneToEnergy;
                 bool usesEqOp = isHasCondition || isCreatureType || isBuffProp || isAlignment || isHasClass || isDescOrEnergy;
                 bool isBoolProperty = condition.Property == ConditionProperty.IsDead
+                    || condition.Property == ConditionProperty.IsDowned
                     || condition.Property == ConditionProperty.IsInCombat
                     || condition.Property == ConditionProperty.IsTargetingSelf
                     || condition.Property == ConditionProperty.IsTargetingAlly
@@ -547,7 +549,7 @@ namespace WrathTactics.UI {
                 case ConditionSubject.AllyByName:
                     return new List<ConditionProperty> {
                         ConditionProperty.HpPercent, ConditionProperty.HpFlat, ConditionProperty.HasBuff,
-                        ConditionProperty.HasCondition, ConditionProperty.IsDead,
+                        ConditionProperty.HasCondition, ConditionProperty.IsDead, ConditionProperty.IsDowned,
                         ConditionProperty.HasDescriptorEffect,
                         ConditionProperty.ImmuneToEnergy,
                         ConditionProperty.Alignment,
@@ -565,7 +567,7 @@ namespace WrathTactics.UI {
                 case ConditionSubject.AllyCount:
                     return new List<ConditionProperty> {
                         ConditionProperty.HpPercent, ConditionProperty.HpFlat, ConditionProperty.HasBuff,
-                        ConditionProperty.HasCondition, ConditionProperty.IsDead,
+                        ConditionProperty.HasCondition, ConditionProperty.IsDead, ConditionProperty.IsDowned,
                         ConditionProperty.HasDescriptorEffect,
                         ConditionProperty.ImmuneToEnergy,
                         ConditionProperty.Alignment,
