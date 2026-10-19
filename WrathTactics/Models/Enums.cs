@@ -59,7 +59,8 @@ namespace WrathTactics.Models {
         AbilityDamage,            // Yes/No — any of the six ability scores carries Damage (Str/Dex/Con/Int/Wis/Cha); for Restoration / Lesser Restoration rules. Drain not counted.
         NegativeLevels,           // Yes/No — UnitPartNegativeLevels.Count > 0 (temporary + permanent energy drain); for Restoration rules.
         HpFlat,                   // numeric — current hit points, flat (HPLeft = HitPoints.ModifiedValue − Damage; temp HP excluded, same expression as the engine's AbilityTargetHPCondition Power-Word gate)
-        WieldsRangedWeapon        // Yes/No — current weapon is ranged (GetFirstWeapon → Blueprint.IsRanged, i.e. AttackType Ranged/RangedTouch); for "focus the archers" rules
+        WieldsRangedWeapon,       // Yes/No — current weapon is ranged (GetFirstWeapon → Blueprint.IsRanged, i.e. AttackType Ranged/RangedTouch); for "focus the archers" rules
+        IsBeingCastOnByAlly       // Ally/Enemy-scope, =/!= : a non-owner ally is currently casting (Standard slot or queue) a UnitUseAbility at this unit; Value = ability GUID filter (empty = any; variant parent/ConvertedFrom also matches), Value2 = optional ally pin; melee attacks never count
     }
 
     public enum ConditionOperator {
