@@ -32,10 +32,11 @@ namespace WrathTactics.Engine {
         // reads null and falls through to float.NaN → condition returns false.
         static ActionDef CurrentAction;
         static UnitEntityData CurrentOwner;
-        // Cached party-best-AB for the duration of a single Evaluate call. NaN means
-        // "not yet computed"; once computed, the same value is reused across all
-        // enemies in EvaluateEnemyBucket (AB is enemy-independent). Cleared in finally.
-        static float CurrentPartyBestAB = float.NaN;
+        // Per-(attacker, enemy) attack-bonus cache for a single Evaluate call. AB is
+        // computed with RuleCalculateAttackBonus against the enemy (shoot-into-melee,
+        // flanking, concealment), so it is enemy-dependent. Cleared in finally.
+        static readonly Dictionary<(UnitEntityData, UnitEntityData), int> CurrentABCache =
+            new Dictionary<(UnitEntityData, UnitEntityData), int>();
         // Cached party-max-effective-level (CharacterLevel + MythicLevel) for the
         // duration of a single Evaluate call. -1 means "not yet computed"; once
         // computed, reused across all enemies in EvaluateEnemyBucket. Cleared in
@@ -64,7 +65,7 @@ namespace WrathTactics.Engine {
             } finally {
                 CurrentAction = null;
                 CurrentOwner = null;
-                CurrentPartyBestAB = float.NaN;
+                CurrentABCache.Clear();
                 CurrentPartyMaxLevel = -1;
             }
         }
