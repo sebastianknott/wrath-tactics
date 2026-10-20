@@ -139,7 +139,7 @@ namespace WrathTactics.Engine {
                     }
                     if (allPass) {
                         foreach (var cc in countConds) {
-                            if (!MatchesPropertyThreshold(cc, ally)) { allPass = false; failReason = $"count {cc.Property}={cc.Value}"; break; }
+                            if (!MatchesPropertyThreshold(cc, ally)) { allPass = false; failReason = DescribeCountFail(cc, ally); break; }
                         }
                     }
                     if (allPass) {
@@ -213,6 +213,13 @@ namespace WrathTactics.Engine {
             string need = TryParseCountThreshold(c.Value2, out float count) ? $"{c.Operator} {count}" : "> 0";
             Log.Engine.Trace($"{property}: {unit.CharacterName} level {level} available={available}, need {need} -> {match}");
             return match;
+        }
+
+        // "count AdjacentEnemyCount GreaterOrEqual 1 (actual 0)". The old "=Value" form
+        // showed the rule's threshold, which read like a measured value in logs.
+        static string DescribeCountFail(Condition cc, UnitEntityData unit) {
+            string actual = MeasuredValue(cc, unit);
+            return $"count {cc.Property} {cc.Operator} {cc.Value}" + (actual == null ? "" : $" (actual {actual})");
         }
     }
 }
