@@ -202,6 +202,7 @@
   "enum.property.IsInCombat": "En combat",
   "enum.property.HitDice": "Dés de vie",
   "enum.property.SpellDCMinusSave": "DD − Sauvegarde",
+  "enum.property.SpellResistMargin": "Pénétration − RM",
   "enum.property.HasClass": "A classe",
   "enum.property.WithinRange": "À portée",
   "enum.property.ABMinusAC": "Marge de touche (BAB − CA)",

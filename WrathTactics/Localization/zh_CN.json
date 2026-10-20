@@ -202,6 +202,7 @@
   "enum.property.IsInCombat": "在战斗中",
   "enum.property.HitDice": "生命骰",
   "enum.property.SpellDCMinusSave": "DC − 豁免",
+  "enum.property.SpellResistMargin": "穿透 − 法术抗力",
   "enum.property.HasClass": "拥有职业",
   "enum.property.WithinRange": "在范围内",
   "enum.property.ABMinusAC": "命中余量 (AB − AC)",
