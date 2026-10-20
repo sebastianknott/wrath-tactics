@@ -2,9 +2,16 @@ using System;
 using System.Collections.Generic;
 using Kingmaker;
 using Kingmaker.Blueprints;
+using Kingmaker.Designers.Mechanics.Facts;
+using Kingmaker.EntitySystem;
 using Kingmaker.EntitySystem.Entities;
 using Kingmaker.RuleSystem;
 using Kingmaker.RuleSystem.Rules;
+using Kingmaker.Enums;
+using Kingmaker.UnitLogic;
+using Kingmaker.UnitLogic.Abilities;
+using Kingmaker.UnitLogic.Mechanics;
+using Kingmaker.UnitLogic.Parts;
 using WrathTactics.Logging;
 using WrathTactics.Models;
 
@@ -111,6 +118,130 @@ namespace WrathTactics.Engine {
                 + (probe.SituationalBonus != 0 ? $" - situational {probe.SituationalBonus}" : "")
                 + $" = {margin} (source={saveTypeSource})"
                 + (string.IsNullOrEmpty(probe.Breakdown) ? "" : $" [{probe.Breakdown.TrimStart()}]"));
+            return margin;
+        }
+
+        // Sentinels of the SpellResistMargin metric (chosen semantics, WTW-22):
+        //  +99 = the spell cannot be resisted (blueprint has no SR check, or the target has no SR)
+        //        → a ">= X" row PASSES, so SR-free spells and SR-free targets never block the rule.
+        //  −99 = the target is immune to the spell (UnitPartSpellResistance.IsImmune)
+        //        → a ">= X" row FAILS, the slot is not wasted on an immune target.
+        internal const int SpellResistMarginPasses = 99;
+        internal const int SpellResistMarginFails = -99;
+
+        // Pure arithmetic: penetration (caster level + bonuses) − spell resistance.
+        // sr <= 0 means "nothing to penetrate" and yields the passing sentinel.
+        internal static int SpellResistMargin(int cl, int bonus, int sr) {
+            if (sr <= 0) return SpellResistMarginPasses;
+            return cl + bonus - sr;
+        }
+
+        // Sentinel layer. Order mirrors RuleSpellResistanceCheck.get_IsSpellResisted:
+        // TargetIsImmune is tested BEFORE HasResistanceRoll, so immunity beats a missing SR check.
+        internal static int SpellResistMargin(bool abilityChecksSr, bool targetImmune, int cl, int bonus, int sr) {
+            if (targetImmune) return SpellResistMarginFails;
+            if (!abilityChecksSr) return SpellResistMarginPasses;
+            return SpellResistMargin(cl, bonus, sr);
+        }
+
+        // Mirrors UnitPartSpellResistance.GetValue(MechanicsContext) (IL-verified):
+        // Max(0, highest applicable SR − AllSRPenalty − (Piercing metamagic ? 5 : 0) + Σ Bonuses).
+        internal static int EffectiveSpellResistance(int baseSr, int allSrPenalty, bool piercing, int bonusSum) {
+            return Math.Max(0, baseSr - allSrPenalty - (piercing ? 5 : 0) + bonusSum);
+        }
+
+        // SpellPenetrationMythicBonus: mythic level with the "Greater" fact, otherwise half of it (int division).
+        internal static int MythicPenetration(int mythicLevel, bool hasGreater) {
+            return hasGreater ? mythicLevel : mythicLevel / 2;
+        }
+
+        // Runs the sources through the game's own ModifiableBonus so ModifierDescriptor stacking is
+        // identical to RuleSpellResistanceCheck.AddSpellPenetration (same-descriptor sources collapse
+        // to the highest unless the descriptor is stackable, e.g. Feat / UntypedStackable). ModifiableBonus is a plain bookkeeping class: no rule is
+        // triggered, nothing is rolled.
+        internal static int SumPenetration(IEnumerable<KeyValuePair<ModifierDescriptor, int>> sources) {
+            var bonus = new ModifiableBonus();
+            foreach (var source in sources) bonus.Add(source.Key, source.Value);
+            return bonus;
+        }
+
+        // ModifierDescriptor SpellPenetrationMythicBonus passes explicitly (0x19 = UntypedStackable, also the
+        // [opt] default of AddSpellPenetration). UntypedStackable and Feat both stack, so Spell Penetration,
+        // Greater Spell Penetration and the mythic bonus add up.
+        const ModifierDescriptor MythicPenetrationDescriptor = ModifierDescriptor.UntypedStackable;
+
+        // Penetration bonuses of the caster, read WITHOUT triggering RuleSpellResistanceCheck (which
+        // rolls a d20 and raises events). Rulebook handlers add them in OnEventAboutToTrigger, so the
+        // equivalent is to read the same components off the caster's active facts:
+        //  - SpellPenetrationBonus (Spell Penetration / Greater Spell Penetration): Value, Descriptor, optional RequiredFact
+        //  - SpellPenetrationMythicBonus: mythic level (or half of it without the Greater fact)
+        // Not modelled (document gap): BindAbilitiesToClass, AlliedSpellcaster, UnitUseAbility (niche
+        // class/monster mechanics that also call AddSpellPenetration), non-Simple ContextValues on
+        // SpellPenetrationBonus (all vanilla ones are Simple), PrimalMagicEssence and
+        // UnitPartSpellResistanceCheckReplace (stat-based replacement check; no vanilla caster here).
+        static int ComputePenetrationBonus(UnitEntityData caster) {
+            var sources = new List<KeyValuePair<ModifierDescriptor, int>>();
+            // Facts.List already holds buffs (EntityFactsManager.Add stores every fact in m_Facts,
+            // IL-verified); scanning Buffs.RawFacts as well would count a buff's bonus twice.
+            CollectPenetration(caster, caster.Descriptor.Facts.List, sources);
+            return SumPenetration(sources);
+        }
+
+        static void CollectPenetration(UnitEntityData caster, IEnumerable<EntityFact> facts,
+            List<KeyValuePair<ModifierDescriptor, int>> sources) {
+            foreach (var fact in facts) {
+                var bp = fact?.Blueprint;
+                if (bp == null || !fact.IsActive) continue;
+                foreach (var c in bp.GetComponents<SpellPenetrationBonus>()) {
+                    if (c.CheckFact && !caster.Descriptor.HasFact(c.RequiredFact)) continue;
+                    if (c.Value.ValueType != ContextValueType.Simple) continue;
+                    sources.Add(new KeyValuePair<ModifierDescriptor, int>(c.Descriptor, c.Value.Value));
+                }
+                foreach (var c in bp.GetComponents<SpellPenetrationMythicBonus>()) {
+                    int mythic = caster.Progression.MythicLevel;
+                    sources.Add(new KeyValuePair<ModifierDescriptor, int>(MythicPenetrationDescriptor,
+                        MythicPenetration(mythic, caster.HasFact(c.Greater))));
+                }
+            }
+        }
+
+        // Returns penetration − target SR for the rule's own [Then] ability (see the sentinels above).
+        // Mirrors the engine's check order (IL RuleSpellResistanceCheck.OnTrigger / get_IsSpellResisted):
+        //  immune → fail; blueprint SpellResistance false → pass; SR from UnitPartSpellResistance on the
+        //  target; penetration = AbilityData.CalculateParams().CasterLevel + ComputePenetrationBonus.
+        // NaN (row fails closed) for non-Cast actions and unresolvable abilities, like ComputeDCMinusSave.
+        static float ComputeSpellResistMargin(UnitEntityData target) {
+            if (target == null || CurrentOwner == null || CurrentAction == null) return float.NaN;
+            if (CurrentAction.Type != ActionType.CastSpell && CurrentAction.Type != ActionType.CastAbility)
+                return float.NaN;
+
+            var ability = ActionValidator.FindAbility(CurrentOwner, CurrentAction.AbilityId);
+            if (ability == null) {
+                Log.Engine.Trace($"SpellResistMargin: FindAbility returned null (guid={CurrentAction.AbilityId})");
+                return float.NaN;
+            }
+
+            // RuleSpellResistanceCheck checks the deliver blueprint of the executing ability, else the spell itself.
+            var bp = ability.GetDeliverBlueprint(false) ?? ability.Blueprint;
+            var part = target.Get<UnitPartSpellResistance>();
+            bool immune = part != null && part.IsImmune(bp, CurrentOwner);
+            bool checksSr = bp.SpellResistance
+                && !(bp.IgnoreSpellResistanceForAlly && !CurrentOwner.Group.IsEnemy(target.Group));
+
+            int cl = 0, bonus = 0, sr = 0;
+            if (!immune && checksSr && part != null) {
+                bool piercing = ability.MetamagicData != null && ability.MetamagicData.Has(Metamagic.Piercing);
+                int bonusSum = 0;
+                foreach (var b in part.Bonuses.Values) bonusSum += b;
+                sr = EffectiveSpellResistance(part.GetValue(bp, CurrentOwner), part.AllSRPenalty, piercing, bonusSum);
+                if (sr > 0) {
+                    cl = ability.CalculateParams().CasterLevel;
+                    bonus = ComputePenetrationBonus(CurrentOwner);
+                }
+            }
+
+            int margin = SpellResistMargin(checksSr, immune, cl, bonus, sr);
+            Log.Engine.Trace($"SpellResistMargin: '{ability.Name}' vs {target.CharacterName}: CL {cl} + bonus {bonus} - SR {sr} = {margin} (srCheck={checksSr}, immune={immune})");
             return margin;
         }
 
