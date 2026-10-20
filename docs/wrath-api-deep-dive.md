@@ -216,6 +216,19 @@ UI: `ConditionRowWidget` renders an `ABAllyPin` ally-picker (`allowAny=true`) wh
 - Return `float.NaN` → `false` on uncomputable
 - Add a Trace log for thresholds
 
+### `spellresistmargin`
+
+`SpellResistMargin` (UI label "Penetration − SR", `ConditionProperty` index 35) is the SR sibling of `spelldcminussave`, evaluated in `ConditionEvaluator.PickMetrics.cs:ComputeSpellResistMargin`. Enemy-scope only (single enemy pickers and `EnemyCount`), numeric operator via `CompareFloat`.
+
+IL evidence (`monodis` on `Assembly-CSharp.dll`):
+
+- `RuleSpellResistanceCheck.OnTrigger`: `SpellResistance = UnitPartSpellResistance.GetValue(Context)`, `SpellPenetration = Context.Params.CasterLevel + m_AdditionalSpellPenetration`; the extra bonus is filled by `AddSpellPenetration(bonus, descriptor = UntypedStackable)` from handlers running in `OnEventAboutToTrigger`. `get_IsSpellResisted`: `TargetIsImmune` → resisted; no resistance roll → not resisted; else `SR > D20 + SpellPenetration`.
+- Handlers that call `AddSpellPenetration`: `SpellPenetrationBonus` (fields `Value` ContextValue, `Descriptor`, `CheckFact`, `RequiredFact`; adds when `!CheckFact || HasFact(RequiredFact)`), `SpellPenetrationMythicBonus` (`MythicLevel`, halved without the `Greater` fact, descriptor 0x19), plus the niche `BindAbilitiesToClass`, `AlliedSpellcaster`, `UnitUseAbility`.
+- `UnitPartSpellResistance.GetValue(MechanicsContext)` = `Max(0, max applicable SR − AllSRPenalty − (Metamagic.Piercing ? 5 : 0) + Σ Bonuses.Values)`. The public overloads `GetValue(BlueprintAbility, UnitEntityData)` / `IsImmune(BlueprintAbility, UnitEntityData)` only cover the first term / the immunity list, so the rest is added in `EffectiveSpellResistance`.
+- `ModifiableBonus.Add(descriptor, value)` collapses same-descriptor sources to the highest unless `ModifierDescriptorHelper.IsStackable` (None, Racial, Dodge, UntypedStackable, Feat, ...). `SumPenetration` uses `ModifiableBonus` itself, a plain bookkeeping class, so stacking is identical.
+
+Chosen semantics (author decisions): no SR check or no SR on the target → **+99** (a `>= X` row passes); target immune → **−99** (fails); penetration bonuses are read off the caster's facts (option "evaluate the bonus components ourselves"), never by triggering the rule. Known gaps: the three niche handlers above, non-Simple `ContextValue`s, Primal Magic Essence, `UnitPartSpellResistanceCheckReplace`.
+
 ### `spelldcminussave`
 
 `SpellDCMinusSave` (UI label "DC − Save") is the other enemy-scope computed-delta condition, sibling to `abminusac-condition`. Evaluated in `ConditionEvaluator.PickMetrics.cs:ComputeDCMinusSave` (~L70).
