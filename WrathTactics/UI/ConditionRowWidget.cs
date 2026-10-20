@@ -143,6 +143,7 @@ namespace WrathTactics.UI {
                     || condition.Property == ConditionProperty.AC
                     || condition.Property == ConditionProperty.HitDice
                     || condition.Property == ConditionProperty.SpellDCMinusSave
+                    || condition.Property == ConditionProperty.SpellResistMargin
                     || condition.Property == ConditionProperty.ABMinusAC
                     || condition.Property == ConditionProperty.EnemyHDMinusPartyLevel
                     || condition.Property == ConditionProperty.WithinRange;
@@ -605,6 +606,7 @@ namespace WrathTactics.UI {
                         ConditionProperty.Alignment,
                         ConditionProperty.HitDice,
                         ConditionProperty.SpellDCMinusSave,
+                        ConditionProperty.SpellResistMargin,
                         ConditionProperty.ABMinusAC,
                         ConditionProperty.EnemyHDMinusPartyLevel,
                         ConditionProperty.HasClass,
@@ -627,6 +629,7 @@ namespace WrathTactics.UI {
                         ConditionProperty.Alignment,
                         ConditionProperty.HitDice,
                         ConditionProperty.SpellDCMinusSave,
+                        ConditionProperty.SpellResistMargin,
                         ConditionProperty.ABMinusAC,
                         ConditionProperty.EnemyHDMinusPartyLevel,
                         ConditionProperty.HasClass,

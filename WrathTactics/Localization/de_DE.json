@@ -200,6 +200,7 @@
   "enum.property.IsInCombat": "Im Kampf",
   "enum.property.HitDice": "Trefferwürfel",
   "enum.property.SpellDCMinusSave": "SG − Rettung",
+  "enum.property.SpellResistMargin": "Durchdringung − ZR",
   "enum.property.HasClass": "Hat Klasse",
   "enum.property.WithinRange": "In Reichweite",
   "enum.property.ABMinusAC": "Trefferspanne (AB − RK)",

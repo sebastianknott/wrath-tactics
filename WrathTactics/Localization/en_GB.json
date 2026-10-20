@@ -200,6 +200,7 @@
   "enum.property.IsInCombat": "IsInCombat",
   "enum.property.HitDice": "HitDice",
   "enum.property.SpellDCMinusSave": "DC − Save",
+  "enum.property.SpellResistMargin": "Penetration − SR",
   "enum.property.HasClass": "HasClass",
   "enum.property.WithinRange": "WithinRange",
   "enum.property.ABMinusAC": "Hit margin (AB − AC)",
