@@ -1,0 +1,50 @@
+name: Check fork release
+
+# Fork only. rebuild-local.sh --publish builds the zip locally (the game DLLs
+# never leave the build machine) and creates the release; this job checks
+# that a player can install the attached zip with Unity Mod Manager.
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Release tag to check"
+        required: true
+
+jobs:
+  check-release:
+    if: github.repository == 'sebastianknott/wrath-tactics'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Resolve release tag
+        env:
+          DISPATCH_TAG: ${{ github.event.inputs.tag }}
+          RELEASE_TAG: ${{ github.event.release.tag_name }}
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "TAG=$DISPATCH_TAG" >> "$GITHUB_ENV"
+          else
+            echo "TAG=$RELEASE_TAG" >> "$GITHUB_ENV"
+          fi
+
+      - name: Download release asset
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release download "$TAG" --pattern "*.zip" --repo ${{ github.repository }} --clobber
+          [ "$(ls *.zip | wc -l)" = 1 ] || { echo "expected exactly one zip asset"; exit 1; }
+          echo "ZIP_FILE=$(ls *.zip)" >> "$GITHUB_ENV"
+
+      - name: Check zip contents and version
+        run: |
+          unzip -l "$ZIP_FILE"
+          unzip -q -d mod "$ZIP_FILE"
+          for f in WrathTactics.dll Info.json; do
+            [ -f "mod/$f" ] || { echo "missing $f in $ZIP_FILE"; exit 1; }
+          done
+          ls mod/Assets/icons/*.png >/dev/null || { echo "missing Assets/icons in $ZIP_FILE"; exit 1; }
+          VERSION="$(jq -r .Version mod/Info.json)"
+          [ "v$VERSION" = "$TAG" ] || { echo "Info.json version $VERSION does not match tag $TAG"; exit 1; }
+          [ "$ZIP_FILE" = "WrathTactics-$VERSION.zip" ] || { echo "zip name $ZIP_FILE does not match version $VERSION"; exit 1; }
+          echo "OK: $ZIP_FILE, version $VERSION"

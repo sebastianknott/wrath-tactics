@@ -1,3 +1,11 @@
+> [!NOTE]
+> **This is a temporary fork of [Gh05d/wrath-tactics](https://github.com/Gh05d/wrath-tactics).**
+> Wrath Tactics is Gh05d's work, and all credit for the mod belongs there. This fork adds a few fixes and features that I offer upstream as pull requests. I will retire the fork once Gh05d merges them or solves the same problems another way, whichever Gh05d prefers.
+>
+> Please report problems with this build here, in this fork, and not upstream. For anything else, the [original project](https://github.com/Gh05d/wrath-tactics) and its [Nexus page](https://www.nexusmods.com/pathfinderwrathoftherighteous/mods/1005) are the place to go.
+>
+> **Install this build:** download `WrathTactics-<version>.zip` from this fork's [Releases](https://github.com/sebastianknott/wrath-tactics/releases) and drag it onto the Unity Mod Manager window. Versions end in `-dh.N` (for example `1.34.0-dh.11`). To go back to the original, install Gh05d's release the same way.
+
 # Wrath Tactics
 
 **Make Companions Smart Again.**
