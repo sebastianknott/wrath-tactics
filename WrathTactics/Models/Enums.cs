@@ -44,7 +44,7 @@ namespace WrathTactics.Models {
         SpellDCMinusSave,
         HasClass,
         WithinRange,
-        ABMinusAC,           // partyBestAB - enemy.AC — Enemy-scope only
+        ABMinusAC,           // bestAB(vs that enemy) - enemy.AC — Enemy-scope only
         IsTargetingSelf,     // Enemy-scope: this enemy targets the rule owner
         IsTargetingAlly,     // Enemy-scope: this enemy targets a non-owner ally
         IsTargetedByAlly,    // Enemy-scope: a non-owner ally targets this enemy

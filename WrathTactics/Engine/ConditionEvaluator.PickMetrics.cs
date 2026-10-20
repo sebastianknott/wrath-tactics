@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using Kingmaker;
 using Kingmaker.Blueprints;
 using Kingmaker.EntitySystem.Entities;
@@ -102,65 +103,65 @@ namespace WrathTactics.Engine {
             return dc - save;
         }
 
-        // Engine-authoritative best attack bonus across all living party members.
-        // RuleCalculateAttackBonusWithoutTarget returns the same AB the game uses at
-        // attack time minus target-side modifiers (flanking, bane, etc.) — it includes
-        // BAB, stat mod (correctly picked by weapon type), weapon enhancement, feats,
-        // and active buffs. NaN on empty / fully-dead party.
-        static float PartyBestAB(UnitEntityData owner) {
-            int best = int.MinValue;
-            foreach (var ally in GetAllPartyMembers(owner)) {
-                int ab = ComputeAB(ally);
-                if (ab > best) best = ab;
-            }
-            return best == int.MinValue ? float.NaN : (float)best;
+        // Engine-authoritative best attack bonus against `enemy` across all living party
+        // members. Uses RuleCalculateAttackBonus (with target), the same pure calculation the
+        // game runs for PowerAttack previews: it adds the target-dependent modifiers
+        // (shoot-into-melee -4, concealment, flanking) on top of the WithoutTarget result.
+        // NoAb on empty / fully-dead party.
+        static int PartyBestAB(UnitEntityData owner, UnitEntityData enemy) {
+            var abs = new List<int>();
+            foreach (var ally in GetAllPartyMembers(owner))
+                abs.Add(CachedAB(ally, enemy));
+            return AbMargin.BestAb(abs);
         }
 
-        // Per-ally AB calculation. Returns int.MinValue for ineligible (dead, no weapon,
-        // not in game) so the caller can detect "no usable AB" without a separate flag.
-        static int ComputeAB(UnitEntityData ally) {
-            if (ally == null || !ally.IsInGame) return int.MinValue;
-            if (ally.Descriptor?.State?.IsFinallyDead ?? false) return int.MinValue;
+        // ComputeAB behind the per-evaluation (attacker, enemy) cache.
+        static int CachedAB(UnitEntityData ally, UnitEntityData enemy) {
+            return AbMargin.GetOrCompute(CurrentABCache, ally, enemy, ComputeAB);
+        }
+
+        // Per-ally AB against a specific enemy. Returns AbMargin.NoAb for ineligible (dead,
+        // no weapon, not in game) so the caller can detect "no usable AB" without a separate
+        // flag. Weapon: main hand, else off hand, else unarmed. The rule is a pure
+        // calculation (no dice, no log), safe to trigger standalone.
+        static int ComputeAB(UnitEntityData ally, UnitEntityData enemy) {
+            if (ally == null || enemy == null || !ally.IsInGame) return AbMargin.NoAb;
+            if (ally.Descriptor?.State?.IsFinallyDead ?? false) return AbMargin.NoAb;
 
             var weapon = ally.Body?.PrimaryHand?.MaybeWeapon
                       ?? ally.Body?.SecondaryHand?.MaybeWeapon
                       ?? ally.Body?.EmptyHandWeapon;
-            if (weapon == null) return int.MinValue;
+            if (weapon == null) return AbMargin.NoAb;
 
-            var rule = Rulebook.Trigger(new RuleCalculateAttackBonusWithoutTarget(ally, weapon, 0));
+            var rule = Rulebook.Trigger(new RuleCalculateAttackBonus(ally, enemy, weapon, 0));
             return rule.Result;
         }
 
-        // Computes ab - enemy.AC for the ABMinusAC condition property. `allyPinUniqueId`
-        // is optional: empty / null ⇒ use the party-best AB (cached across the rule's
-        // enemy scan); set ⇒ AllyProvider.Resolve and use that specific ally's AB.
-        // Pinned-AB is NOT cached because each pin is a different ally and the helper is
-        // called once per enemy — caching would need a (pin, AB) dict that pays for
-        // itself only on multi-enemy bucket scans. Skipping it is fine for rules with
-        // single-target picks (the common case for "Wenduag low-AB → Sosiel buffs her").
+        // Computes ab - enemy.AC for the ABMinusAC condition property, where ab is the
+        // attack bonus AGAINST THIS ENEMY (see PartyBestAB). `allyPinUniqueId` is optional:
+        // empty / null => best AB among the party; set => AllyProvider.Resolve and use that
+        // specific ally's AB. Both paths go through the (attacker, enemy) cache, so enemy
+        // lists do not re-trigger the rule for the same pair within one Evaluate.
         // Rule-scoped: CurrentOwner is the rule's owning unit (set in Evaluate, cleared in finally).
         // NaN when the party / pinned ally is empty/dead/weaponless or the enemy is null.
         static float ComputeABMinusAC(UnitEntityData enemy, string allyPinUniqueId) {
             if (enemy == null || CurrentOwner == null) return float.NaN;
 
-            float ab;
+            int ab;
             if (string.IsNullOrEmpty(allyPinUniqueId)) {
-                if (float.IsNaN(CurrentPartyBestAB))
-                    CurrentPartyBestAB = PartyBestAB(CurrentOwner);
-                ab = CurrentPartyBestAB;
+                ab = PartyBestAB(CurrentOwner, enemy);
             } else {
                 var pinned = AllyProvider.Resolve(allyPinUniqueId);
                 if (pinned == null) {
                     Log.Engine.Trace($"ABMinusAC: ally pin '{allyPinUniqueId}' did not resolve");
                     return float.NaN;
                 }
-                int rawAb = ComputeAB(pinned);
-                ab = rawAb == int.MinValue ? float.NaN : (float)rawAb;
+                ab = CachedAB(pinned, enemy);
             }
 
-            if (float.IsNaN(ab)) return float.NaN;
             int ac = enemy.Stats.AC.ModifiedValue;
-            float margin = ab - ac;
+            float margin = AbMargin.Margin(ab, ac);
+            if (float.IsNaN(margin)) return float.NaN;
             string source = string.IsNullOrEmpty(allyPinUniqueId) ? "partyBestAB" : $"ally='{allyPinUniqueId}'";
             Log.Engine.Trace($"ABMinusAC: {enemy.CharacterName} AC={ac}, AB={ab} ({source}) -> margin={margin}");
             return margin;
