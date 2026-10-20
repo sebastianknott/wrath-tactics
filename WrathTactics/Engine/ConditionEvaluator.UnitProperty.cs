@@ -202,8 +202,7 @@ namespace WrathTactics.Engine {
                 }
 
                 case ConditionProperty.HasBuff: {
-                    bool hasBuff = unit.Buffs.RawFacts.Any(b =>
-                        b.Blueprint.AssetGuid.ToString() == condition.Value);
+                    bool hasBuff = UnitHasBuffGuid(unit, condition.Value);
                     return condition.Operator == ConditionOperator.NotEqual ? !hasBuff : hasBuff;
                 }
 
@@ -431,8 +430,7 @@ namespace WrathTactics.Engine {
                     // Exact-GUID match, identical to the hot-path site above. The picker
                     // stores a blueprint GUID; a vestigial name-substring fallback once lived
                     // here from the pre-picker free-text era — removed so both sites agree.
-                    bool hasBuff = unit.Buffs.RawFacts.Any(b =>
-                        b.Blueprint.AssetGuid.ToString() == condition.Value);
+                    bool hasBuff = UnitHasBuffGuid(unit, condition.Value);
                     return condition.Operator == ConditionOperator.NotEqual ? !hasBuff : hasBuff;
                 }
 
