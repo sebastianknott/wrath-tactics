@@ -13,6 +13,8 @@ on:
 
 jobs:
   upload-to-nexus:
+    # Fork guard: only the original repository publishes to its Nexus page.
+    if: github.repository == 'Gh05d/wrath-tactics'
     runs-on: ubuntu-latest
     steps:
       - name: Resolve release tag
