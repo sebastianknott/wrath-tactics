@@ -8,6 +8,8 @@ namespace WrathTactics.Models {
         [JsonProperty] public string Name { get; set; } = "New Rule";
         [JsonProperty] public bool Enabled { get; set; } = true;
         [JsonProperty] public int CooldownRounds { get; set; } = 1;
+        /// <summary>Fire at most once per combat (per unit). Counts from the current combat's start; outside combat it has no effect. Old JSON without the field loads as false.</summary>
+        [JsonProperty] public bool OncePerCombat { get; set; }
         [JsonProperty] public List<ConditionGroup> ConditionGroups { get; set; } = new();
         [JsonProperty] public ActionDef Action { get; set; } = new();
         [JsonProperty] public TargetDef Target { get; set; } = new();

@@ -60,6 +60,7 @@
   "ally.picker.any": "(Beliebiger Verbündeter)",
 
   "cooldown.label": "Abklingzeit (Runden):",
+  "cooldown.once_per_combat": "Einmal pro Kampf",
 
   "default.new_rule_name": "Neue Regel",
   "clone.suffix": " (Kopie)",

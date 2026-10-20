@@ -212,6 +212,12 @@ namespace WrathTactics.Engine {
                     }
                 }
 
+                if (cooldowns.TryGetValue(cooldownKey, out float lastFiredInCombat)
+                    && CooldownPolicy.BlockedByOncePerCombat(rule.OncePerCombat, inCombat, true, lastFiredInCombat, combatStartTime)) {
+                    Log.Engine.Trace($"{unit.CharacterName} Rule {i} \"{rule.Name}\": already fired this combat (once per combat)");
+                    continue;
+                }
+
                 ConditionEvaluator.ClearMatchedEntities();
 
                 bool match = ConditionEvaluator.Evaluate(rule, unit);
