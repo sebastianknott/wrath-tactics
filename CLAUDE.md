@@ -12,9 +12,9 @@ Shared build/deploy/Nexus/release rules: → parent `pathfinder-mods/CLAUDE.md` 
 ~/.dotnet/dotnet build WrathTactics/WrathTactics.csproj -p:SolutionDir=$(pwd)/
 ```
 
-**Release build** (produces distribution zip): add `-c Release` — the `CreateZip` target only runs in Release config; output `bin/WrathTactics-<version>.zip`. NU1900 warnings im Build = NuGet-Vulnerability-Index via Proxy unerreichbar — harmlos, kein Artefakt-Problem.
+**Release build** (produces distribution zip): add `-c Release` — the `CreateZip` target only runs in Release config; output `bin/WrathTactics-<version>.zip`. NU1900 warnings in the build = NuGet vulnerability index unreachable via proxy — harmless, not an artifact problem.
 
-**Build-Ergebnis in Ketten prüfen**: `OUT=$(~/.dotnet/dotnet build … 2>&1); echo "$OUT" | grep -q ' error ' && exit 1` — ein `grep -E ' error |Build succeeded'` ist bei Fehlern trotzdem exit 0 und lässt `&& git commit && ./deploy.sh` weiterlaufen.
+**Check the build result in chains**: `OUT=$(~/.dotnet/dotnet build … 2>&1); echo "$OUT" | grep -q ' error ' && exit 1` — a `grep -E ' error |Build succeeded'` still exits 0 on errors and lets `&& git commit && ./deploy.sh` keep running.
 
 **Version files** (generic rule → parent §Release Process): `WrathTactics/Info.json` (UMM reads this), `WrathTactics/WrathTactics.csproj` `<Version>` (zip filename), `Repository.json`. Bumping only one ships a zip with the stale version in its name.
 
@@ -27,7 +27,7 @@ Pure-logic xUnit suite in `WrathTactics.Tests/` (net481; mono hosts the runner o
 ```
 
 - **Flaky mono runner — loop until green before believing failures** (`for i in 1 2 3; do … test --no-build …; done`; mass-failures with varying counts = flake, not regression). Test-csproj facts (game DLLs copied to output by `AfterTargets="Build"`, compile reference to non-publicized `Assembly-CSharp.dll` + `UnityEngine.CoreModule.dll`, `InternalsVisibleTo` → `internal static`, no CI by design) and the Deck smoke-test pack (`docs/testing/deck-smoke/`): `claude-context/testing.md`.
-- **UI-Layout ist nur am Deck verifizierbar** — jede Schicht UI-Arbeit endet mit einem Screenshot vom User; ohne den gilt sie als ungetestet (`testing.md`).
+- **UI layout can only be verified on the Deck** — every UI work session ends with a screenshot from the user; without one it counts as untested (`testing.md`).
 
 ## Deploy
 
@@ -82,11 +82,11 @@ WrathTactics/
                        # ConditionRowWidget, PresetPanel, PackPanel, PackPalette, SaveAsPackOverlay,
                        # BuffPickerOverlay, SpellPickerOverlay, SpellDropdownProvider,
                        # PortraitToggleBadge/PortraitToggleOverlay, UIHelpers,
-                       # Theme (alle Farben/Maße) + ThemeProvider + Widgets (alle Controls) — SSoT, s. gotchas-ui.md
+                       # Theme (all colors/sizes) + ThemeProvider + Widgets (all controls) — SSoT, see gotchas-ui.md
   Compatibility/       # BubbleBuffsCompat (Buff It 2 The Limit integration)
   Localization/        # Strings + EnumLabels + 5 locale JSONs (en/de/fr/ru/zh)
   Logging/             # Category-based logging (Engine, Game, Persistence, UI)
-tools/extract_sprites.py  # (repo root) Owlcat-Sprites + 9-Slice-Borders aus sharedassets0.assets (UnityPy-venv)
+tools/extract_sprites.py  # (repo root) Owlcat sprites + 9-slice borders from sharedassets0.assets (UnityPy venv)
 ```
 
 ### Core Data Flow
@@ -135,25 +135,25 @@ IL evidence, version history, and incident reports: `docs/wrath-api-deep-dive.md
 - **Enums are APPEND-ONLY** — preset/config JSON persists numeric indices (`gotchas-persistence.md`).
 - **`PresetId`-only rules have empty bodies by design** — cleanup passes must exempt them (`gotchas-persistence.md`).
 - **Packs live in their own directory (`Packs/`), never `Presets/`** — `PresetManager.LoadAll` globs `Presets/*.json` and would silently parse a pack file as a malformed rule (`gotchas-persistence.md`).
-- **Blueprint-Matching ist exact-only (GUID oder voller Name), nie `Contains`** — Substring matcht versteckte Item-/Aura-Facts; traf HasBuff UND CreatureType (`incidents.md`). Details `gotchas-conditions.md`.
-- **Move und Standard sind gepaarte Slots**: `UnitCommands.Run` eines Move-Kommandos löscht das Standard-Kommando (pending oder laufend) und umgekehrt; nur Swift/Free sind unabhängig. Eine Move-Regel darf nie über einem eigenen Cast feuern (`ActionSlots.CheckConflict`, `gotchas-engine.md`).
-- **KI-Kommando vs. Spielerklick = `UnitCommand.AiAction`**: `AiBrainController.SelectAction` stempelt jedes eigene Kommando, ein Klick nie. Nie über Blueprint (`Brain.AutoUseAbility`) unterscheiden — der Spieler castet denselben Zauber auch explizit (`gotchas-engine.md`).
-- **Fremdsprachige Nexus-Reports nennen Rückübersetzungen der UI**: Begriff zuerst in `WrathTactics/Localization/*.json` greppen (`grep -i '<wort>'`), das Label führt zum Enum — ru „Окружён“ („Surrounded“) ist `IsFlanked`, „Approach target“ ist `MoveToTarget`. Nie aus dem englischen Wort raten.
+- **Blueprint matching is exact-only (GUID or full name), never `Contains`** — a substring matches hidden item/aura facts; this hit HasBuff AND CreatureType (`incidents.md`). Details `gotchas-conditions.md`.
+- **Move and Standard are paired slots**: `UnitCommands.Run` of a Move command deletes the Standard command (pending or running) and vice versa; only Swift/Free are independent. A Move rule must never fire over an own cast (`ActionSlots.CheckConflict`, `gotchas-engine.md`).
+- **AI command vs. player click = `UnitCommand.AiAction`**: `AiBrainController.SelectAction` stamps every command it issues, a click never. Never tell them apart by blueprint (`Brain.AutoUseAbility`) — the player also casts the same spell explicitly (`gotchas-engine.md`).
+- **Non-English Nexus reports quote back-translations of the UI**: grep the term in `WrathTactics/Localization/*.json` first (`grep -i '<word>'`), the label leads to the enum — ru "Окружён" ("Surrounded") is `IsFlanked`, "Approach target" is `MoveToTarget`. Never guess from the English word.
 - **Rule priority = array position** — no `Priority` field; log "Rule N" = array index.
 - No per-round EventBus events in RTWP — use `Game.Instance.Player.GameTime` in `Update()`.
 - New i18n keys need en_GB at minimum; locale JSONs are EmbeddedResources → rebuild + redeploy (`i18n.md`).
-- **„Muss ich jedes Mal einstellen"-Reports = Default-Frage, kein Feature-Gap**: jedes Rule-Feld startet auf Enum-Index 0 (`TargetType.Self`, …). Action-abhängige Defaults gehören in `Models/TargetDefaults` (rein, getestet), nie in den Widget-Handler; nur den Index-0-Wert ersetzen, explizite Wahl nie überschreiben.
-- **CodeGraph stale lock**: `database is locked` ODER Agenten melden „not initialized" trotz vorhandener `.codegraph/` ⇒ `rm -rf .codegraph/codegraph.db.lock/`.
+- **"I have to set this every time" reports = a defaults question, not a feature gap**: every rule field starts at enum index 0 (`TargetType.Self`, …). Action-dependent defaults belong in `Models/TargetDefaults` (pure, tested), never in the widget handler; replace only the index-0 value, never overwrite an explicit choice.
+- **CodeGraph stale lock**: `database is locked` OR agents report "not initialized" although `.codegraph/` exists ⇒ `rm -rf .codegraph/codegraph.db.lock/`.
 
 ## Release Process
 
-→ parent §Release Process / §Nexus Mods. **Nexus-Beschreibung**: das Glossar (README §Glossary) liegt als BBCode in `docs/nexus-glossary.bbcode`, nach README-Änderung neu rendern mit `python3 tools/gen_nexus_glossary.py README.md docs/nexus-glossary.bbcode` und auf der Mod-Seite ersetzen (kein API-Weg, nur Browser). Remote is `origin`. `/release` (`.claude/commands/release.md`): bump → build → user-confirm gate → push → tag → GitHub Release → Nexus upload (auto). Mod-page: https://www.nexusmods.com/pathfinderwrathoftherighteous/mods/1005.
+→ parent §Release Process / §Nexus Mods. **Nexus description**: the glossary (README §Glossary) lives as BBCode in `docs/nexus-glossary.bbcode`; after a README change, re-render it with `python3 tools/gen_nexus_glossary.py README.md docs/nexus-glossary.bbcode` and replace it on the mod page (no API route, browser only). Remote is `origin`. `/release` (`.claude/commands/release.md`): bump → build → user-confirm gate → push → tag → GitHub Release → Nexus upload (auto). Mod-page: https://www.nexusmods.com/pathfinderwrathoftherighteous/mods/1005.
 
 ## Logs
 
 - **Mod session logs**: `<game>/Mods/WrathTactics/Logs/wrath-tactics-*.log` (separate from `Player.log`). Latest: `ssh deck-direct "ls -t '<game>/Mods/WrathTactics/Logs/' | head -1"`.
 - Triage recipes ("rule didn't fire", preemption, deploy verification): `claude-context/triage.md`.
-- **„Wer hat mein Kommando unterbrochen?"**: `grep 'interrupted (started='` im Mod-Log — `CommandDiagnostics` loggt Aufrufer-Frames und die drei `TickCommand`-Interrupt-Eingaben. `EXECUTED` belegt nur die Ausgabe, `ended: Success` den Effekt (`triage.md`).
+- **"Who interrupted my command?"**: `grep 'interrupted (started='` in the mod log — `CommandDiagnostics` logs caller frames and the three `TickCommand` interrupt inputs. `EXECUTED` proves only that the command was issued, `ended: Success` proves the effect (`triage.md`).
 
 ## Code Style
 
