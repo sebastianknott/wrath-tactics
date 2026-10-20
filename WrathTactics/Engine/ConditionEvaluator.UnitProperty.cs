@@ -213,6 +213,11 @@ namespace WrathTactics.Engine {
                     return condition.Operator == ConditionOperator.NotEqual ? !immune : immune;
                 }
 
+                case ConditionProperty.HasEnergyResistance: {
+                    bool resists = HasEnergyResistance(unit, condition.Value);
+                    return condition.Operator == ConditionOperator.NotEqual ? !resists : resists;
+                }
+
                 case ConditionProperty.SpellSlotsAtLevel:
                     int level = (int)threshold;
                     return MatchesSlotCount(CountAvailableSlotsAtLevel(unit, level), condition);
@@ -421,6 +426,11 @@ namespace WrathTactics.Engine {
                 case ConditionProperty.ImmuneToEnergy: {
                     bool immune = IsImmuneToEnergy(unit, condition.Value);
                     return condition.Operator == ConditionOperator.NotEqual ? !immune : immune;
+                }
+
+                case ConditionProperty.HasEnergyResistance: {
+                    bool resists = HasEnergyResistance(unit, condition.Value);
+                    return condition.Operator == ConditionOperator.NotEqual ? !resists : resists;
                 }
 
                 case ConditionProperty.CreatureType:
