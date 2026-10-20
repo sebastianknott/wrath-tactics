@@ -61,6 +61,7 @@
   "ally.picker.any": "(Любой союзник)",
 
   "cooldown.label": "Перезарядка (раунды):",
+  "cooldown.once_per_combat": "Один раз за бой",
 
   "default.new_rule_name": "Новое правило",
   "clone.suffix": " (копия)",
