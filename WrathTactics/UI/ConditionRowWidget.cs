@@ -387,14 +387,27 @@ namespace WrathTactics.UI {
                     // Value2 ally-pin: empty = use party-best AB (legacy), set = compute
                     // margin against THIS ally's AB ("Wenduag struggles to hit → buff her").
                     bool hasAbAllyPin = condition.Property == ConditionProperty.ABMinusAC;
-                    float valFlex = hasAbAllyPin ? 0.14f : 0.37f;   // old spans 0.51–0.65 / 0.51–0.88
+                    // Resource: Value = resource GUID, Value2 = optional amount (empty = legacy ">0").
+                    bool hasResourceAmount = condition.Property == ConditionProperty.Resource;
+                    float valFlex = hasAbAllyPin || hasResourceAmount ? 0.14f : 0.37f;   // old spans 0.51–0.65 / 0.51–0.88
 
                     var valueInput = UIHelpers.CreateTMPInputFieldInRow(root, "Value",
-                        60f, valFlex, condition.Value ?? "", 16f);
+                        60f, valFlex, condition.Value ?? "", 16f,
+                        placeholderText: hasResourceAmount ? "condition.resourceGuid".i18n() : null);
                     valueInput.onEndEdit.AddListener(v => {
                         condition.Value = v;
                         onChanged?.Invoke();
                     });
+
+                    if (hasResourceAmount) {
+                        var resAmountInput = UIHelpers.CreateTMPInputFieldInRow(root, "ResourceAmount",
+                            60f, 0.22f, condition.Value2 ?? "", 16f,
+                            TMP_InputField.ContentType.IntegerNumber, "condition.resourceAmount".i18n());
+                        resAmountInput.onEndEdit.AddListener(v => {
+                            condition.Value2 = v;   // empty allowed: returns to legacy ">0"
+                            onChanged?.Invoke();
+                        });
+                    }
 
                     if (hasAbAllyPin) {
                         CreateAllyPicker(root, 0.22f, "ABAllyPin",
@@ -533,6 +546,7 @@ namespace WrathTactics.UI {
                         ConditionProperty.HasDescriptorEffect,
                         ConditionProperty.ImmuneToEnergy,
                         ConditionProperty.SpellSlotsAtLevel, ConditionProperty.SpellSlotsAboveLevel,
+                        ConditionProperty.Resource,
                         ConditionProperty.Alignment,
                         ConditionProperty.HasClass,
                         ConditionProperty.IsSummon,

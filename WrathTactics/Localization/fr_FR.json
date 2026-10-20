@@ -156,6 +156,8 @@
   "preset.default.smite_evil": "Châtiment du Mal",
 
   "condition.with": "avec",
+  "condition.resourceGuid": "GUID ressource",
+  "condition.resourceAmount": "Quantité",
   "bool.yes": "Oui",
   "bool.no": "Non",
 

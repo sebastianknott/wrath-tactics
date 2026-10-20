@@ -156,6 +156,8 @@
   "preset.default.smite_evil": "Smite Evil",
 
   "condition.with": "with",
+  "condition.resourceGuid": "Resource GUID",
+  "condition.resourceAmount": "Amount",
   "bool.yes": "Yes",
   "bool.no": "No",
 

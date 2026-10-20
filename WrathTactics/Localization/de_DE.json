@@ -156,6 +156,8 @@
   "preset.default.smite_evil": "Niederschmettern: Böse",
 
   "condition.with": "mit",
+  "condition.resourceGuid": "Ressourcen-GUID",
+  "condition.resourceAmount": "Menge",
   "bool.yes": "Ja",
   "bool.no": "Nein",
 
