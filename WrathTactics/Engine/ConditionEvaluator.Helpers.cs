@@ -12,8 +12,11 @@ namespace WrathTactics.Engine {
             if (string.IsNullOrEmpty(wanted)) return false;
             if (ContainsGuid(System.Linq.Enumerable.Select(unit.Buffs.RawFacts,
                     b => b.Blueprint.AssetGuid.ToString()), wanted)) return true;
-            return ContainsGuid(System.Linq.Enumerable.Select(unit.Descriptor.Facts.List,
+            bool inFacts = ContainsGuid(System.Linq.Enumerable.Select(unit.Descriptor.Facts.List,
                 f => f?.Blueprint?.AssetGuid.ToString()), wanted);
+            // Only this fallback is new; log it so a match the old Buffs-only check missed shows up.
+            if (inFacts) Log.Engine.Trace($"HasBuff: {unit.CharacterName} has {wanted} via Descriptor.Facts.List (not in Buffs)");
+            return inFacts;
         }
 
         // Pure exact-match core of UnitHasBuffGuid (same case-sensitive == as the old inline check).
