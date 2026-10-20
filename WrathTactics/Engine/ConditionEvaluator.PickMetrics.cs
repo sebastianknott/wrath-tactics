@@ -213,7 +213,7 @@ namespace WrathTactics.Engine {
             // RuleSpellResistanceCheck checks the deliver blueprint of the executing ability, else the spell itself.
             var bp = ability.GetDeliverBlueprint(false) ?? ability.Blueprint;
             var part = target.Get<UnitPartSpellResistance>();
-            bool immune = part != null && part.IsImmune(bp, CurrentOwner);
+            bool immune = part != null && IsImmuneToCast(part, ability);
             bool checksSr = bp.SpellResistance
                 && !(bp.IgnoreSpellResistanceForAlly && !CurrentOwner.Group.IsEnemy(target.Group));
 
@@ -232,6 +232,18 @@ namespace WrathTactics.Engine {
             int margin = SpellResistMargin(checksSr, immune, cl, bonus, sr);
             Log.Engine.Trace($"SpellResistMargin: '{ability.Name}' vs {target.CharacterName}: CL {cl} + bonus {bonus} - SR {sr} = {margin} (srCheck={checksSr}, immune={immune})");
             return margin;
+        }
+
+        // UnitPartSpellResistance.IsImmune(BlueprintAbility, caster) passes no descriptor, and CanApply then skips
+        // every SpellDescriptor immunity (IL: `if (!contextDescriptors.HasValue) return false`), so undead or
+        // constructs looked open to mind-affecting spells. The cast goes through RuleSpellResistanceCheck ->
+        // IsImmune(MechanicsContext), which hands CanApply the source AbilityData and context.SpellDescriptor.
+        // Mirror that call with the AbilityData and its SpellDescriptor.
+        static bool IsImmuneToCast(UnitPartSpellResistance part, AbilityData ability) {
+            var descriptor = ability.SpellDescriptor;
+            foreach (var immunity in part.m_SpellImmunities)
+                if (part.CanApply(immunity, ability, CurrentOwner, descriptor, null)) return true;
+            return false;
         }
 
         // Engine-authoritative best attack bonus across all living party members.
