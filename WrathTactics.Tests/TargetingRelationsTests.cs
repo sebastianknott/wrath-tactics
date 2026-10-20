@@ -12,7 +12,7 @@ namespace WrathTactics.Tests {
 
         [Fact]
         public void IsBeingCastOnByAlly_enum_index_is_pinned() {
-            Assert.Equal(35, (int)ConditionProperty.IsBeingCastOnByAlly);
+            Assert.Equal(36, (int)ConditionProperty.IsBeingCastOnByAlly);
         }
 
         [Theory]
