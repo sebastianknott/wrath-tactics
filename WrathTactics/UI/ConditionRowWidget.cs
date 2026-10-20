@@ -188,6 +188,7 @@ namespace WrathTactics.UI {
                     || condition.Property == ConditionProperty.HasCondition
                     || condition.Property == ConditionProperty.HasDescriptorEffect
                     || condition.Property == ConditionProperty.ImmuneToEnergy
+                    || condition.Property == ConditionProperty.HasEnergyResistance
                     || condition.Property == ConditionProperty.IsBeingCastOnByAlly
                     || condition.Property == ConditionProperty.HasClass) {
                     CreateEqOperator(root, 0.06f, "CountEqOp");
@@ -267,7 +268,8 @@ namespace WrathTactics.UI {
                 bool isHasClass = condition.Property == ConditionProperty.HasClass;
                 bool isWithinRange = condition.Property == ConditionProperty.WithinRange;
                 bool isDescOrEnergy = condition.Property == ConditionProperty.HasDescriptorEffect
-                    || condition.Property == ConditionProperty.ImmuneToEnergy;
+                    || condition.Property == ConditionProperty.ImmuneToEnergy
+                    || condition.Property == ConditionProperty.HasEnergyResistance;
                 bool isCastOnByAlly = condition.Property == ConditionProperty.IsBeingCastOnByAlly;
                 bool usesEqOp = isHasCondition || isCreatureType || isBuffProp || isAlignment || isHasClass || isDescOrEnergy
                     || isCastOnByAlly;
@@ -470,6 +472,7 @@ namespace WrathTactics.UI {
                 case ConditionProperty.HasCondition: return EnumLabels.KeysForCondition();
                 case ConditionProperty.HasDescriptorEffect: return EnumLabels.KeysForDescriptorEffect();
                 case ConditionProperty.ImmuneToEnergy:      return EnumLabels.KeysForEnergy();
+                case ConditionProperty.HasEnergyResistance: return EnumLabels.KeysForEnergy();
                 case ConditionProperty.WithinRange:  return RangeBracketNames;
                 default:                             return new List<string>();
             }
@@ -497,6 +500,7 @@ namespace WrathTactics.UI {
                 case ConditionProperty.HasCondition: return EnumLabels.LabelsForCondition();
                 case ConditionProperty.HasDescriptorEffect: return EnumLabels.LabelsForDescriptorEffect();
                 case ConditionProperty.ImmuneToEnergy:      return EnumLabels.LabelsForEnergy();
+                case ConditionProperty.HasEnergyResistance: return EnumLabels.LabelsForEnergy();
                 // WithinRange deliberately absent: bracket labels are operator-
                 // dependent — use GetRangeBracketLabels(condition.Operator).
                 default: return new List<string>();
@@ -614,6 +618,7 @@ namespace WrathTactics.UI {
                         ConditionProperty.HasCondition,
                         ConditionProperty.HasDescriptorEffect,
                         ConditionProperty.ImmuneToEnergy,
+                        ConditionProperty.HasEnergyResistance,
                         ConditionProperty.SpellSlotsAtLevel, ConditionProperty.SpellSlotsAboveLevel,
                         ConditionProperty.Alignment,
                         ConditionProperty.HasClass,
@@ -633,6 +638,7 @@ namespace WrathTactics.UI {
                         ConditionProperty.HasCondition, ConditionProperty.IsDead,
                         ConditionProperty.HasDescriptorEffect,
                         ConditionProperty.ImmuneToEnergy,
+                        ConditionProperty.HasEnergyResistance,
                         ConditionProperty.Alignment,
                         ConditionProperty.HasClass,
                         ConditionProperty.WithinRange,
@@ -653,6 +659,7 @@ namespace WrathTactics.UI {
                         ConditionProperty.HasCondition, ConditionProperty.IsDead,
                         ConditionProperty.HasDescriptorEffect,
                         ConditionProperty.ImmuneToEnergy,
+                        ConditionProperty.HasEnergyResistance,
                         ConditionProperty.Alignment,
                         ConditionProperty.HasClass,
                         ConditionProperty.WithinRange,
@@ -688,6 +695,7 @@ namespace WrathTactics.UI {
                         ConditionProperty.HasBuff, ConditionProperty.HasCondition,
                         ConditionProperty.HasDescriptorEffect,
                         ConditionProperty.ImmuneToEnergy,
+                        ConditionProperty.HasEnergyResistance,
                         ConditionProperty.CreatureType,
                         ConditionProperty.Alignment,
                         ConditionProperty.HitDice,
@@ -712,6 +720,7 @@ namespace WrathTactics.UI {
                         ConditionProperty.HasCondition, ConditionProperty.CreatureType,
                         ConditionProperty.HasDescriptorEffect,
                         ConditionProperty.ImmuneToEnergy,
+                        ConditionProperty.HasEnergyResistance,
                         ConditionProperty.Alignment,
                         ConditionProperty.HitDice,
                         ConditionProperty.SpellDCMinusSave,
