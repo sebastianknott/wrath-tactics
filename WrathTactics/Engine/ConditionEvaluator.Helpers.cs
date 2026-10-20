@@ -6,6 +6,26 @@ using KmAlignment = Kingmaker.Enums.Alignment;
 
 namespace WrathTactics.Engine {
     public static partial class ConditionEvaluator {
+        // HasBuff source of truth. Buffs granted innately via AddFacts on the unit blueprint
+        // (e.g. Xanthir Vang's FreedomOfMovementBuff) can live only in Descriptor.Facts.List,
+        // so check Buffs.RawFacts first, then the descriptor's fact list. Exact GUID, never Contains.
+        static bool UnitHasBuffGuid(UnitEntityData unit, string wanted) {
+            if (string.IsNullOrEmpty(wanted)) return false;
+            if (ContainsGuid(System.Linq.Enumerable.Select(unit.Buffs.RawFacts,
+                    b => b.Blueprint.AssetGuid.ToString()), wanted)) return true;
+            bool inFacts = ContainsGuid(System.Linq.Enumerable.Select(unit.Descriptor.Facts.List,
+                f => f?.Blueprint?.AssetGuid.ToString()), wanted);
+            // Only this fallback is new; log it so a match the old Buffs-only check missed shows up.
+            if (inFacts) Log.Engine.Trace($"HasBuff: {unit.CharacterName} has {wanted} via Descriptor.Facts.List (not in Buffs)");
+            return inFacts;
+        }
+
+        // Pure exact-match core of UnitHasBuffGuid (same case-sensitive == as the old inline check).
+        internal static bool ContainsGuid(System.Collections.Generic.IEnumerable<string> guids, string wanted) {
+            if (string.IsNullOrEmpty(wanted)) return false;
+            return System.Linq.Enumerable.Any(guids, g => g == wanted);
+        }
+
         // Exact blueprint GUIDs of the game's creature-type facts, keyed by the
         // lowercase dropdown key (EnumLabels.KeysForCreatureType). The engine has
         // no IsUndead-style API — its own targeting conditions (AbilityTargetHasFact /
