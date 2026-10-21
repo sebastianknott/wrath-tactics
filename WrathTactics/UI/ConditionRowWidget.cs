@@ -242,7 +242,8 @@ namespace WrathTactics.UI {
                         || condition.Property == ConditionProperty.IsFlanked
                         || condition.Property == ConditionProperty.AbilityDamage
                         || condition.Property == ConditionProperty.NegativeLevels
-                        || condition.Property == ConditionProperty.WieldsRangedWeapon;
+                        || condition.Property == ConditionProperty.WieldsRangedWeapon
+                        || condition.Property == ConditionProperty.IsVisible;
                     condition.Operator = ConditionOperator.Equal;
                     if (isBool) {
                         var yesNo = new List<string> { "bool.yes".i18n(), "bool.no".i18n() };
@@ -284,7 +285,8 @@ namespace WrathTactics.UI {
                     || condition.Property == ConditionProperty.IsFlanked
                     || condition.Property == ConditionProperty.AbilityDamage
                     || condition.Property == ConditionProperty.NegativeLevels
-                    || condition.Property == ConditionProperty.WieldsRangedWeapon;
+                    || condition.Property == ConditionProperty.WieldsRangedWeapon
+                    || condition.Property == ConditionProperty.IsVisible;
                 bool needsOperator = !usesEqOp && !isBoolProperty;
 
                 // Operator popup selector
@@ -712,6 +714,7 @@ namespace WrathTactics.UI {
                         ConditionProperty.IsPet,
                         ConditionProperty.WieldsRangedWeapon,
                         ConditionProperty.IsFlanked,
+                        ConditionProperty.IsVisible,
                         ConditionProperty.AdjacentEnemyCount
                     };
                 case ConditionSubject.EnemyCount:
@@ -733,6 +736,7 @@ namespace WrathTactics.UI {
                         ConditionProperty.IsPet,
                         ConditionProperty.WieldsRangedWeapon,
                         ConditionProperty.IsFlanked,
+                        ConditionProperty.IsVisible,
                         ConditionProperty.AdjacentEnemyCount
                     };
                 case ConditionSubject.Combat:
