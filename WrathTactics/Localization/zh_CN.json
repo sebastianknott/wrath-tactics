@@ -334,6 +334,9 @@
   "enum.descriptor.Poison": "毒素",
   "enum.descriptor.Disease": "疾病",
   "enum.descriptor.Bleed": "流血",
+  "enum.ability_group.Healing": "治疗",
+  "enum.ability_group.Control": "控制",
+  "enum.ability_group.Damage": "伤害",
 
   "enum.energy.Fire": "火焰",
   "enum.energy.Cold": "寒冷",
