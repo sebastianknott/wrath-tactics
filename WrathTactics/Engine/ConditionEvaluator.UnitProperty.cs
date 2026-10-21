@@ -207,8 +207,10 @@ namespace WrathTactics.Engine {
                 }
 
                 case ConditionProperty.HasEnergyResistance: {
-                    bool resists = HasEnergyResistance(unit, condition.Value);
-                    return condition.Operator == ConditionOperator.NotEqual ? !resists : resists;
+                    int resist = GetEnergyResistance(unit, condition.Value);
+                    bool resMatch = MatchesEnergyResistance(resist, condition, useAmount: true);
+                    Log.Engine.Trace($"HasEnergyResistance {condition.Value} on {unit.CharacterName}: resist={resist}, value2='{condition.Value2}', op={condition.Operator} -> {resMatch}");
+                    return resMatch;
                 }
 
                 case ConditionProperty.SpellSlotsAtLevel:
@@ -418,10 +420,9 @@ namespace WrathTactics.Engine {
                     return condition.Operator == ConditionOperator.NotEqual ? !immune : immune;
                 }
 
-                case ConditionProperty.HasEnergyResistance: {
-                    bool resists = HasEnergyResistance(unit, condition.Value);
-                    return condition.Operator == ConditionOperator.NotEqual ? !resists : resists;
-                }
+                case ConditionProperty.HasEnergyResistance:
+                    // Count-subject path: Value2 is the COUNT threshold, never an amount.
+                    return MatchesEnergyResistance(GetEnergyResistance(unit, condition.Value), condition, useAmount: false);
 
                 case ConditionProperty.CreatureType:
                     bool ctMatch2 = CheckCreatureType(unit, condition.Value);
