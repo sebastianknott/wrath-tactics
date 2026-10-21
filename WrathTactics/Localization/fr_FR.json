@@ -223,6 +223,7 @@
   "enum.property.WieldsRangedWeapon": "Manie une arme à distance",
   "enum.property.IsDowned": "Tombé",
   "enum.property.IsFlanked": "Est flanqué",
+  "enum.property.IsVisible": "Est visible",
   "enum.property.AbilityDamage": "Dégâts de caractéristique",
   "enum.property.NegativeLevels": "Niveaux négatifs",
   "enum.property.AdjacentEnemyCount": "Ennemis adjacents",
@@ -345,6 +346,8 @@
   "enum.condition.Helpless": "Sans défense",
   "enum.condition.Cowering": "Tremblant",
   "enum.condition.DeathDoor": "Aux portes de la mort",
+  "enum.condition.Dominated": "Dominé",
+  "enum.condition.Charmed": "Charmé",
 
   "enum.descriptor.Poison": "Poison",
   "enum.descriptor.Disease": "Maladie",
