@@ -20,6 +20,11 @@ namespace WrathTactics.UI {
             PopupSelector.CreateInRow(row, "TargetType", 0.39f, targetNames,
                 (int)rule.Target.Type, idx => {
                     rule.Target.Type = (TargetType)idx;
+                    // A filter left by another type (SpecificAlly UniqueId, buff GUID) is no condition
+                    // key: clear it so the picker falls back to the first key.
+                    if (rule.Target.Type == TargetType.AllyWithCondition
+                        && !EnumLabels.KeysForCondition().Any(k => string.Equals(k, rule.Target.Filter, System.StringComparison.OrdinalIgnoreCase)))
+                        rule.Target.Filter = "";
                     PersistEdit();
                     RebuildBody();
                 });
