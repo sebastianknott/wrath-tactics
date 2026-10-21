@@ -59,6 +59,7 @@
   "target.filter.ally": "Ally:",
   "ally.picker.any": "(Any ally)",
 
+  "cooldown.uninterruptible": "Uninterruptible (no other rule may cancel it)",
   "cooldown.label": "Cooldown (rounds):",
 
   "default.new_rule_name": "New Rule",

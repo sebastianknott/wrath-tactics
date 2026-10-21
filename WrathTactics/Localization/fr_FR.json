@@ -59,6 +59,7 @@
   "target.filter.ally": "Allié :",
   "ally.picker.any": "(N'importe quel allié)",
 
+  "cooldown.uninterruptible": "Non interruptible (aucune autre règle ne peut l'annuler)",
   "cooldown.label": "Recharge (rounds) :",
 
   "default.new_rule_name": "Nouvelle règle",

@@ -22,6 +22,11 @@ namespace WrathTactics.UI {
             // Trailing flexible spacer keeps the input at its preferred width.
             var (spacer, _s) = UIHelpers.Create("Spacer", row.transform);
             Widgets.InRow(spacer, 0f, 0.55f);
+
+            Widgets.Checkbox(parent, "Uninterruptible", "cooldown.uninterruptible".i18n(), rule.Uninterruptible, v => {
+                rule.Uninterruptible = v;
+                PersistEdit();
+            });
         }
     }
 }
