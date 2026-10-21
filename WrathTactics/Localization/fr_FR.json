@@ -158,6 +158,7 @@
   "condition.with": "avec",
   "bool.yes": "Oui",
   "bool.no": "Non",
+  "condition.resistAmount": "Résist. min.",
 
   "enum.subject.Self": "Soi",
   "enum.subject.Ally": "Allié",

@@ -158,6 +158,7 @@
   "condition.with": "с",
   "bool.yes": "Да",
   "bool.no": "Нет",
+  "condition.resistAmount": "Мин. сопр.",
 
   "enum.subject.Self": "Себя",
   "enum.subject.Ally": "Союзник",
