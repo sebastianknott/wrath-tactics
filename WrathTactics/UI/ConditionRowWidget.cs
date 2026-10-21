@@ -68,11 +68,19 @@ namespace WrathTactics.UI {
             var subjectNames = EnumLabels.NamesFor<ConditionSubject>();
             PopupSelector.CreateInRow(root, "Subject", 0.15f, subjectNames,
                 (int)condition.Subject, v => {
+                    var oldPropertyForResist = condition.Property;
+                    bool wasCountSubject = IsCountSubject(condition.Subject);
                     condition.Subject = (ConditionSubject)v;
                     // Reset property to first valid for new subject
                     var validProps = GetPropertiesForSubject(condition.Subject);
                     if (!validProps.Contains(condition.Property) && validProps.Count > 0)
                         condition.Property = validProps[0];
+                    ClearValue2OnEnergyResistSwitch(oldPropertyForResist);
+                    // Count subjects keep a count in Value2, other subjects an amount: crossing
+                    // between them with HasEnergyResistance selected must not carry the number over.
+                    if (wasCountSubject != IsCountSubject(condition.Subject)
+                        && condition.Property == ConditionProperty.HasEnergyResistance)
+                        condition.Value2 = "";
                     onChanged?.Invoke();
                     Rebuild();
                 });
@@ -85,7 +93,9 @@ namespace WrathTactics.UI {
             propertySelector = PopupSelector.CreateInRow(root, "Property", 0.21f,
                 propNames, propIdx, v => {
                     var currentProps = GetPropertiesForSubject(condition.Subject);
+                    var oldPropertyForResist = condition.Property;
                     if (v < currentProps.Count) condition.Property = currentProps[v];
+                    ClearValue2OnEnergyResistSwitch(oldPropertyForResist);
                     onChanged?.Invoke();
                     Rebuild();
                 });
@@ -260,7 +270,11 @@ namespace WrathTactics.UI {
                 bool isDescOrEnergy = condition.Property == ConditionProperty.HasDescriptorEffect
                     || condition.Property == ConditionProperty.ImmuneToEnergy
                     || condition.Property == ConditionProperty.HasEnergyResistance;
-                bool usesEqOp = isHasCondition || isCreatureType || isBuffProp || isAlignment || isHasClass || isDescOrEnergy;
+                // HasEnergyResistance on single-unit subjects takes a full operator plus an optional
+                // Value2 amount ("Fire >= 20"); empty amount = legacy "has resistance" with =/!=.
+                bool isEnergyResist = condition.Property == ConditionProperty.HasEnergyResistance;
+                bool usesEqOp = isHasCondition || isCreatureType || isBuffProp || isAlignment || isHasClass
+                    || (isDescOrEnergy && !isEnergyResist);
                 bool isBoolProperty = condition.Property == ConditionProperty.IsDead
                     || condition.Property == ConditionProperty.IsInCombat
                     || condition.Property == ConditionProperty.IsTargetingSelf
@@ -324,10 +338,19 @@ namespace WrathTactics.UI {
                     var deLabels = GetValueLabelsForProperty(condition.Property);
                     int deIdx = deKeys.IndexOf(condition.Value);
                     if (deIdx < 0) { deIdx = 0; condition.Value = deKeys[0]; }
-                    PopupSelector.CreateInRow(root, "DescEnergyValue", 0.43f, deLabels, deIdx, v => {
+                    PopupSelector.CreateInRow(root, "DescEnergyValue", isEnergyResist ? 0.23f : 0.43f, deLabels, deIdx, v => {
                         condition.Value = deKeys[v];
                         onChanged?.Invoke();
                     });
+                    if (isEnergyResist) {
+                        var resistAmountInput = UIHelpers.CreateTMPInputFieldInRow(root, "ResistAmount",
+                            60f, 0.14f, condition.Value2 ?? "", 16f,
+                            TMP_InputField.ContentType.IntegerNumber, "condition.resistAmount".i18n());
+                        resistAmountInput.onEndEdit.AddListener(v => {
+                            condition.Value2 = v;   // empty allowed: returns to legacy "has resistance"
+                            onChanged?.Invoke();
+                        });
+                    }
                 } else if (isHasClass) {
                     var entries = ClassProvider.GetAll();
                     var labels = entries.Select(e => e.Label).ToList();
@@ -408,6 +431,18 @@ namespace WrathTactics.UI {
 
             // Delete button
             Widgets.IconButton(root.transform, "DelBtn", Icon.X, Theme.IconSmall, () => onDelete?.Invoke());
+        }
+
+        static bool IsCountSubject(ConditionSubject s) =>
+            s == ConditionSubject.AllyCount || s == ConditionSubject.EnemyCount;
+
+        // HasEnergyResistance stores a resistance amount in Value2; a value typed under another
+        // meaning (ally pin, count) must not leak in or out, so entering/leaving it drops Value2.
+        void ClearValue2OnEnergyResistSwitch(ConditionProperty oldProperty) {
+            if (oldProperty == condition.Property) return;
+            if (oldProperty == ConditionProperty.HasEnergyResistance
+                || condition.Property == ConditionProperty.HasEnergyResistance)
+                condition.Value2 = "";
         }
 
         void CreateEqOperator(GameObject root, float flexibleWidth, string name) {

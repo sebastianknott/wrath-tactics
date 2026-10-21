@@ -1,6 +1,7 @@
 using Kingmaker.EntitySystem.Entities;
 using Kingmaker.UnitLogic;
 using WrathTactics.Logging;
+using WrathTactics.Models;
 using KmAlignment = Kingmaker.Enums.Alignment;
 
 namespace WrathTactics.Engine {
@@ -223,23 +224,38 @@ namespace WrathTactics.Engine {
             return dr != null && dr.IsImmune(energy);
         }
 
-        // Energy resistance > 0 against one of the five castable elementals. Walks
+        // Highest energy resistance against one of the five castable elementals (0 = none). Walks
         // UnitPartDamageReduction.AllSources (Protection/Resist Energy, wizard abjuration,
         // racial and item resistances all land there as AddDamageResistanceEnergy).
         // GetCurrentValue, not GetValue: it respects the UsePool counter, so an exhausted
         // Protection From Energy pool reads 0. Immunity is NOT resistance — see IsImmuneToEnergy.
-        internal static bool HasEnergyResistance(UnitEntityData unit, string energyName) {
-            if (unit == null || string.IsNullOrEmpty(energyName)) return false;
+        internal static int GetEnergyResistance(UnitEntityData unit, string energyName) {
+            if (unit == null || string.IsNullOrEmpty(energyName)) return 0;
             if (!System.Enum.TryParse<Kingmaker.Enums.Damage.DamageEnergyType>(energyName, out var energy))
-                return false;
+                return 0;
             var dr = unit.Get<Kingmaker.UnitLogic.Parts.UnitPartDamageReduction>();
-            if (dr == null) return false;
+            if (dr == null) return 0;
             var sources = new System.Collections.Generic.List<(Kingmaker.Enums.Damage.DamageEnergyType, int)>();
             foreach (var rt in dr.AllSources) {
                 if (rt.Settings is Kingmaker.UnitLogic.FactLogic.AddDamageResistanceEnergy e)
                     sources.Add((e.Type, rt.GetCurrentValue()));
             }
-            return HighestEnergyResistance(sources, energy) > 0;
+            return HighestEnergyResistance(sources, energy);
+        }
+
+        // HasEnergyResistance decision (pure). useAmount = single-unit subjects only: there
+        // Value2 = optional resistance amount compared with the Operator ("Fire >= 20").
+        // Empty/garbage Value2 (every legacy rule) => legacy "resistance > 0" with =/!=.
+        // Count subjects (EnemyCount/AllyCount) pass useAmount=false: their Value2 is the
+        // COUNT threshold and must never be read as an amount.
+        internal static bool MatchesEnergyResistance(int highest, Condition c, bool useAmount) {
+            if (useAmount
+                && float.TryParse(c.Value2, System.Globalization.NumberStyles.Any,
+                    System.Globalization.CultureInfo.InvariantCulture, out float amount)
+                && amount >= 0f && !float.IsInfinity(amount))
+                return CompareFloat(highest, c.Operator, amount);
+            bool resists = highest > 0;
+            return c.Operator == ConditionOperator.NotEqual ? !resists : resists;
         }
 
         // Pure core of HasEnergyResistance. Energy resistance does not stack in this engine
