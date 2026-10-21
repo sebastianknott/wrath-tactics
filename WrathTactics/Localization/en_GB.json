@@ -221,6 +221,7 @@
   "enum.property.IsBeingCastOnByAlly": "Cast on it by ally",
   "enum.property.HasDescriptorEffect": "Affected by",
   "enum.property.ImmuneToEnergy": "Immune to energy",
+  "enum.property.HasEnergyResistance": "Resists energy",
   "enum.property.EnemyHDMinusPartyLevel": "HD − PartyMax",
 
   "enum.action.CastSpell": "CastSpell",
