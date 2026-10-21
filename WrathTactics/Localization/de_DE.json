@@ -345,6 +345,9 @@
   "enum.descriptor.Poison": "Gift",
   "enum.descriptor.Disease": "Krankheit",
   "enum.descriptor.Bleed": "Blutung",
+  "enum.ability_group.Healing": "Heilung",
+  "enum.ability_group.Control": "Kontrolle",
+  "enum.ability_group.Damage": "Schaden",
 
   "enum.energy.Fire": "Feuer",
   "enum.energy.Cold": "Kälte",
