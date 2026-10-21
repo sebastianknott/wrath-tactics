@@ -60,6 +60,7 @@
   "target.filter.ally": "Союзник:",
   "ally.picker.any": "(Любой союзник)",
 
+  "cooldown.uninterruptible": "Не прерывать (другие правила не могут отменить)",
   "cooldown.label": "Перезарядка (раунды):",
   "cooldown.once_per_combat": "Один раз за бой",
 
