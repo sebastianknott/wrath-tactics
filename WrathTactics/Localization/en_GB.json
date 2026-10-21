@@ -158,6 +158,8 @@
   "condition.with": "with",
   "condition.slotLevel": "Level",
   "condition.slotMinCount": "Min. count",
+  "condition.count.shared": "together",
+  "condition.count.own": "own count",
   "bool.yes": "Yes",
   "bool.no": "No",
 

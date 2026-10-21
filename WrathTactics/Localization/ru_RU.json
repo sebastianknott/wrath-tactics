@@ -158,6 +158,8 @@
   "condition.with": "с",
   "condition.slotLevel": "Круг",
   "condition.slotMinCount": "мин. кол-во",
+  "condition.count.shared": "вместе",
+  "condition.count.own": "отдельно",
   "bool.yes": "Да",
   "bool.no": "Нет",
 
