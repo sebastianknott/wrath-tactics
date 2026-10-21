@@ -289,6 +289,11 @@ namespace WrathTactics.Engine {
                     return CompareFloat(count, condition.Operator, threshold);
                 }
 
+                case ConditionProperty.EngagedEnemyCount: {
+                    // Engine melee engagement (edge-to-edge + LOS); see CountEngagedEnemies.
+                    return CompareFloat(CountEngagedEnemies(unit), condition.Operator, threshold);
+                }
+
                 default:
                     return false;
             }
@@ -470,6 +475,13 @@ namespace WrathTactics.Engine {
                             count++;
                     }
                     return CompareFloat(count, condition.Operator, threshold);
+                }
+
+                case ConditionProperty.EngagedEnemyCount: {
+                    if (!float.TryParse(condition.Value, System.Globalization.NumberStyles.Any,
+                        System.Globalization.CultureInfo.InvariantCulture, out threshold))
+                        return false;
+                    return CompareFloat(CountEngagedEnemies(unit), condition.Operator, threshold);
                 }
 
                 default:
