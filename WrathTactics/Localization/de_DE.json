@@ -60,6 +60,7 @@
   "target.filter.ally": "Verbündeter:",
   "ally.picker.any": "(Beliebiger Verbündeter)",
 
+  "cooldown.uninterruptible": "Nicht unterbrechbar (keine andere Regel darf abbrechen)",
   "cooldown.label": "Abklingzeit (Runden):",
 
   "default.new_rule_name": "Neue Regel",
