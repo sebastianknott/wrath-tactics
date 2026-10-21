@@ -39,12 +39,16 @@ namespace WrathTactics.UI {
                 Widgets.InRow(filterLbl, 0f, 0.14f);
                 Widgets.InkLabel(filterLbl, filterLabel, 14f, TextAlignmentOptions.MidlineRight, Theme.InkMuted, italic: true);
 
-                var filterInput = UIHelpers.CreateTMPInputFieldInRow(row, "TargetFilter",
-                    80f, 0.34f, rule.Target.Filter ?? "", 15f);
-                filterInput.onEndEdit.AddListener(v => {
-                    rule.Target.Filter = v;
-                    PersistEdit();
-                });
+                if (rule.Target.Type == TargetType.AllyWithCondition) {
+                    SetupConditionFilterPicker(row);
+                } else {
+                    var filterInput = UIHelpers.CreateTMPInputFieldInRow(row, "TargetFilter",
+                        80f, 0.34f, rule.Target.Filter ?? "", 15f);
+                    filterInput.onEndEdit.AddListener(v => {
+                        rule.Target.Filter = v;
+                        PersistEdit();
+                    });
+                }
             } else if (needsAllyPicker) {
                 // SpecificAlly: pick a concrete companion. Filter stores the UniqueId (per-save).
                 var (allyLbl, _a) = UIHelpers.Create("AllyLabel", row.transform);
@@ -76,6 +80,30 @@ namespace WrathTactics.UI {
                 var (spacer, _sp) = UIHelpers.Create("Spacer", row.transform);
                 Widgets.InRow(spacer, 0f, 0.48f);
             }
+        }
+
+        // AllyWithCondition: same key list as a HasCondition row (matched case-insensitively by
+        // ConditionEvaluator.HasConditionByName). An empty filter takes the first key; an unknown
+        // hand-typed one stays listed as-is until the user picks a key, so opening the panel never
+        // rewrites it.
+        void SetupConditionFilterPicker(GameObject row) {
+            var keys = EnumLabels.KeysForCondition();
+            var labels = EnumLabels.LabelsForCondition();
+            string filter = rule.Target.Filter ?? "";
+            int idx = keys.FindIndex(k => string.Equals(k, filter, System.StringComparison.OrdinalIgnoreCase));
+            if (idx < 0 && filter.Length == 0) {
+                idx = 0;
+                rule.Target.Filter = keys[0];
+                PersistEdit();
+            } else if (idx < 0) {
+                keys.Insert(0, filter);
+                labels.Insert(0, filter);
+                idx = 0;
+            }
+            PopupSelector.CreateInRow(row, "TargetCondition", 0.34f, labels, idx, v => {
+                rule.Target.Filter = keys[v];
+                PersistEdit();
+            });
         }
     }
 }
