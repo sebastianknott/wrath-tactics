@@ -543,7 +543,9 @@ namespace WrathTactics.UI {
         void CreateAbilityFilterSelector(GameObject root, float flexibleWidth) {
             // A property switch can leave a stale "true"/"false" (or other non-GUID text) in
             // Value; as a filter it would match nothing. Blueprint GUIDs are 32 hex chars.
-            if (!string.IsNullOrEmpty(condition.Value) && condition.Value.Length != 32)
+            // "group:<Key>" (spell group) is a valid filter too.
+            if (!string.IsNullOrEmpty(condition.Value) && condition.Value.Length != 32
+                && !WrathTactics.Engine.AbilityGroups.TryParse(condition.Value, out _))
                 condition.Value = "";
             var btnObj = Widgets.BandDropdownShell(root.transform, "AbilityFilterButton",
                 AbilityFilterLabel(condition.Value), withIcon: false, out var label, out _);
@@ -557,6 +559,12 @@ namespace WrathTactics.UI {
                 var entries = new List<SpellDropdownProvider.SpellEntry> {
                     new SpellDropdownProvider.SpellEntry("placeholder.any_ability".i18n(), "")
                 };
+                // Spell groups sit between "(any)" and the single spells.
+                foreach (var group in new[] { WrathTactics.Engine.AbilityGroup.Healing,
+                    WrathTactics.Engine.AbilityGroup.Control, WrathTactics.Engine.AbilityGroup.Damage }) {
+                    entries.Add(new SpellDropdownProvider.SpellEntry(
+                        $"enum.ability_group.{group}".i18n(), WrathTactics.Engine.AbilityGroups.ToFilter(group)));
+                }
                 entries.AddRange(SpellDropdownProvider.GetPartyFilterEntries(
                     Kingmaker.Game.Instance.Player.PartyAndPets));
                 SpellPickerOverlay.Open(entries, condition.Value, picked => {
@@ -569,6 +577,8 @@ namespace WrathTactics.UI {
 
         static string AbilityFilterLabel(string guid) {
             if (string.IsNullOrEmpty(guid)) return "placeholder.any_ability".i18n();
+            if (WrathTactics.Engine.AbilityGroups.TryParse(guid, out var group))
+                return $"enum.ability_group.{group}".i18n();
             var name = Kingmaker.Blueprints.ResourcesLibrary
                 .TryGetBlueprint<Kingmaker.UnitLogic.Abilities.Blueprints.BlueprintAbility>(guid)?.Name;
             return string.IsNullOrEmpty(name) ? guid : name;
