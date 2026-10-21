@@ -211,6 +211,7 @@
   "enum.property.IsPet": "是宠物",
   "enum.property.WieldsRangedWeapon": "持远程武器",
   "enum.property.IsFlanked": "被夹击",
+  "enum.property.IsVisible": "可见",
   "enum.property.AbilityDamage": "属性伤害",
   "enum.property.NegativeLevels": "负向等级",
   "enum.property.AdjacentEnemyCount": "相邻敌人数",
@@ -328,6 +329,8 @@
   "enum.condition.Helpless": "无助",
   "enum.condition.Cowering": "畏缩",
   "enum.condition.DeathDoor": "濒死",
+  "enum.condition.Dominated": "被支配",
+  "enum.condition.Charmed": "被魅惑",
 
   "enum.descriptor.Poison": "毒素",
   "enum.descriptor.Disease": "疾病",

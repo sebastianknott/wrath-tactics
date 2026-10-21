@@ -191,6 +191,9 @@ namespace WrathTactics.Engine {
                 case "helpless":   return unit.State.HasCondition(UnitCondition.Helpless);
                 case "cowering":   return unit.State.HasCondition(UnitCondition.Cowering);
                 case "deathdoor":  return unit.State.HasCondition(UnitCondition.DeathDoor);
+                // No UnitCondition exists for these: detected via the buff components that flip the faction.
+                case "dominated":  return ControlEffects.IsDominated(unit);
+                case "charmed":    return ControlEffects.IsCharmed(unit);
                 default:           return false;
             }
         }

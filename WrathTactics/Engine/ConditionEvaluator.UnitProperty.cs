@@ -179,6 +179,12 @@ namespace WrathTactics.Engine {
                     return EqualsBool(isPet, condition);
                 }
 
+                case ConditionProperty.IsVisible: {
+                    bool visible = unit.IsVisibleForPlayer;
+                    Log.Engine.Trace($"IsVisible: {unit.CharacterName} visible={visible}");
+                    return EqualsBool(visible, condition);
+                }
+
                 case ConditionProperty.WieldsRangedWeapon: {
                     // "Archer" detection is weapon-based, not class-based — mobs are
                     // Fighters/Rangers with bows. See WieldsRangedWeapon helper for IL notes.
@@ -372,6 +378,13 @@ namespace WrathTactics.Engine {
                     bool isPet = unit.Get<Kingmaker.UnitLogic.Parts.UnitPartPet>() != null;
                     bool wantPet = ParseBoolValue(condition.Value);
                     bool match = isPet == wantPet;
+                    return condition.Operator == ConditionOperator.NotEqual ? !match : match;
+                }
+
+                case ConditionProperty.IsVisible: {
+                    bool visible = unit.IsVisibleForPlayer;
+                    bool wantVisible = ParseBoolValue(condition.Value);
+                    bool match = visible == wantVisible;
                     return condition.Operator == ConditionOperator.NotEqual ? !match : match;
                 }
 
