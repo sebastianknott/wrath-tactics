@@ -197,7 +197,7 @@ Every term in the rule editor, in UI order. All checks are **snapshots**: a cond
 | **SaveFortitude / SaveReflex / SaveWill** | number | Current saving-throw bonus. |
 | **HitDice** | number | Hit dice (character level without mythic ranks). |
 | **HasBuff** | buff | The unit carries exactly that buff (picked from the buff list). `!=` means "is missing it". |
-| **HasCondition** | condition | The unit has that game condition (Paralyzed, Stunned, Frightened, Nauseated, Confused, Blinded, Prone, Entangled, Exhausted, Fatigued, Shaken, Sickened, Sleeping, Petrified, Slowed, Staggered, Dazed, Dazzled, Helpless, Cowering, Death's Door). |
+| **HasCondition** | condition | The unit has that game condition (Paralyzed, Stunned, Frightened, Nauseated, Confused, Blinded, Prone, Entangled, Exhausted, Fatigued, Shaken, Sickened, Sleeping, Petrified, Slowed, Staggered, Dazed, Dazzled, Helpless, Cowering, Death's Door, Dominated, Charmed). |
 | **Affected by** | Poison / Disease / Bleed | Any active effect of that kind, no matter which spell or monster caused it. |
 | **Immune to energy** | Fire / Cold / Electricity / Acid / Sonic | The unit is fully immune to that energy type. |
 | **CreatureType** | type | Aberration, Animal, Construct, Dragon, Fey, Humanoid, Magical Beast, Monstrous Humanoid, Ooze, Outsider, Plant, Swarm, Undead, Vermin, Incorporeal. Uses the same type facts the game's own spells use; "Humanoid" means "none of the other types". |
@@ -207,6 +207,7 @@ Every term in the rule editor, in UI order. All checks are **snapshots**: a cond
 | **Is summon** | Yes/No | A summoned monster (Summon Monster, Animate Dead, …). Pets and companions are not summons. |
 | **Is pet** | Yes/No | Animal companion, Aivu, skeletal champion, eidolon, clone or similar. |
 | **Wields ranged weapon** | Yes/No | The unit's current weapon is a bow, crossbow, firearm, sling or thrown weapon. Re-checked every tick, so a weapon swap changes it. |
+| **Is visible** | Yes/No | The party can currently see the unit (not in fog of war, not invisible). Enemy subjects only; "No" catches invisible enemies a spell cannot target. |
 | **Is flanked** | Yes/No | The game's own flanking state: at least two enemies are engaging the unit in melee (and it has no "cannot be flanked" feature). This is about attackers, not about being surrounded geometrically. |
 | **Enemies adjacent** | number | How many living enemies in combat stand within 2 m of the unit (centre to centre, so a large creature next to the unit can count as 0 — use **Enemies in melee (engaged)** for "is this unit in melee"). |
 | **Enemies in melee (engaged)** | number | How many living enemies the game itself treats as in melee with the unit: enemies it threatens plus enemies threatening it, each counted once. Uses the game's own reach (creature size + weapon reach, line of sight), so large creatures and reach weapons count. Self / Ally / AllyCount only. |
