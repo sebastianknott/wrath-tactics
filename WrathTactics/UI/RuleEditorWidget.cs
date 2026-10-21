@@ -212,8 +212,11 @@ namespace WrathTactics.UI {
             // Rows rendered by RebuildBody, in order (keep in sync with it):
             // header | IF label | cond rows | per-group add row (or AddFirstCond) | (groups-1) OR dividers
             // | flourish | action row | fallback rows | [+Fallback row] | target row | cooldown row
+            // | uninterruptible checkbox row
             int rows = (hideHeader ? 0 : 1) + 1 + condCount + Mathf.Max(groupCount, 1) + Mathf.Max(0, groupCount - 1)
-                + 1 + 1 + fallbackCount + (chainCapable ? 1 : 0) + 1 + 1;
+                + 1 + 1 + fallbackCount + (chainCapable ? 1 : 0) + 1 + 1
+                + 1                                   // uninterruptible checkbox
+                ;
             float height = headerH
                 + Theme.SectionLabelHeight
                 + condCount * Theme.RowHeight
@@ -225,6 +228,7 @@ namespace WrathTactics.UI {
                 + (chainCapable ? Theme.InlineRowHeight : 0f)
                 + Theme.RowHeight                           // target
                 + Theme.RowHeight                           // cooldown
+                + Theme.InlineRowHeight                     // uninterruptible checkbox
                 + Mathf.Max(0, rows - 1) * bodySpacing
                 + pad;
             layoutElement.preferredHeight = Mathf.Clamp(height, Theme.MinCardHeight, Theme.MaxCardHeight);
