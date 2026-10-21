@@ -156,6 +156,8 @@
   "preset.default.smite_evil": "Niederschmettern: Böse",
 
   "condition.with": "mit",
+  "condition.count.shared": "gemeinsam",
+  "condition.count.own": "eigene Zählung",
   "bool.yes": "Ja",
   "bool.no": "Nein",
 

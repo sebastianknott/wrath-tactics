@@ -156,6 +156,8 @@
   "preset.default.smite_evil": "Кара зла",
 
   "condition.with": "с",
+  "condition.count.shared": "вместе",
+  "condition.count.own": "отдельно",
   "bool.yes": "Да",
   "bool.no": "Нет",
 

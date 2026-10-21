@@ -41,38 +41,26 @@ namespace WrathTactics.Engine {
                 if (matchedEnemy == null) return false;
             }
 
-            // Count path: count enemies that pass every non-Count condition AND every Count
-            // condition's property-threshold. Threshold = max Value2 across Count conditions.
-            // Operator = first Count row's CountOperator — bucket UI emits one count row, so
-            // mixed operators across multiple Count rows is a misuse; take the first.
+            // Count path: count enemies that pass every non-Count condition AND the rows of
+            // each count set. Unflagged Count rows form ONE shared set (threshold = max Value2,
+            // operator = first row's CountOperator); every row flagged CountSeparately is its own
+            // set with its own threshold/operator. All sets must hold (see CountSet).
             if (countConds.Count > 0) {
-                float countThreshold = ResolveCountThreshold(countConds);
-                var countOp = countConds[0].CountOperator;
-
-                int count = 0;
-                UnitEntityData firstCounted = null;
-                foreach (var enemy in enemies) {
-                    bool allPass = true;
-                    foreach (var c in nonCountConds) {
-                        if (!EvaluateUnitProperty(c, enemy)) { allPass = false; break; }
-                    }
-                    if (!allPass) continue;
-                    foreach (var cc in countConds) {
-                        if (!MatchesPropertyThreshold(cc, enemy)) { allPass = false; break; }
-                    }
-                    if (allPass) {
-                        count++;
-                        if (firstCounted == null) firstCounted = enemy;
-                    }
+                var sets = CountSet.Build(countConds);
+                var tally = CountSets.Tally(enemies, sets,
+                    enemy => nonCountConds.All(c => EvaluateUnitProperty(c, enemy)),
+                    MatchesPropertyThreshold);
+                if (!CountSets.AllPass(sets, tally.Counts)) {
+                    Log.Engine.Trace($"EnemyBucket miss: {DescribeCountSets(sets, tally.Counts)}");
+                    return false;
                 }
-                if (!CompareCount(count, countThreshold, countOp)) return false;
                 // Count-only groups (no per-enemy conditions) previously latched nothing,
                 // so TargetType.ConditionTarget resolved to None and the rule silently
                 // skipped at validation ("rule matches but nobody attacks" report). Fall
                 // back to the first counted match. Stays null for pass-with-zero gates
                 // (e.g. EnemyCount < 3 passing on count=0) — no enemy satisfied the
                 // predicate, so there is no ConditionTarget to offer.
-                if (matchedEnemy == null) matchedEnemy = firstCounted;
+                if (matchedEnemy == null) matchedEnemy = CountSets.FirstCountedAny(tally);
             }
 
             // Latch only after the whole bucket passed — latching before the count
@@ -123,41 +111,32 @@ namespace WrathTactics.Engine {
             }
 
             if (countConds.Count > 0) {
-                float countThreshold = ResolveCountThreshold(countConds);
-                var countOp = countConds[0].CountOperator;
-
-                int count = 0;
-                UnitEntityData firstCounted = null;
-                var perAlly = new List<string>();
+                var sets = CountSet.Build(countConds);
                 // AllyCount historically includes self; keep that behavior (use GetAllPartyMembers
                 // without filtering owner) for Count, to match the previous EvaluateAllyCount.
-                foreach (var ally in GetAllPartyMembers(owner)) {
-                    bool allPass = true;
-                    string failReason = null;
-                    foreach (var c in nonCountConds) {
-                        if (!EvaluateUnitProperty(c, ally)) { allPass = false; failReason = $"non-count {c.Property}"; break; }
+                var members = GetAllPartyMembers(owner).ToList();
+                var tally = CountSets.Tally(members, sets,
+                    ally => nonCountConds.All(c => EvaluateUnitProperty(c, ally)),
+                    MatchesPropertyThreshold);
+                // Trace only on a miss (per-tick spam otherwise).
+                if (!CountSets.AllPass(sets, tally.Counts)) {
+                    var perAlly = new List<string>();
+                    for (int i = 0; i < members.Count; i++) {
+                        var ally = members[i];
+                        int hpPct = ally.Stats.HitPoints.ModifiedValue > 0
+                            ? (int)(100f * ally.HPLeft / ally.Stats.HitPoints.ModifiedValue) : 0;
+                        float dist = UnityEngine.Vector3.Distance(owner.Position, ally.Position);
+                        var passed = tally.PerUnit[i];
+                        string verdict = passed == null ? "fail@non-count"
+                            : string.Join("/", passed.Select((p, k) => p ? "in" : "out"));
+                        perAlly.Add($"{ally.CharacterName}(hp={hpPct}%,d={dist:F1}m):{verdict}");
                     }
-                    if (allPass) {
-                        foreach (var cc in countConds) {
-                            if (!MatchesPropertyThreshold(cc, ally)) { allPass = false; failReason = $"count {cc.Property}={cc.Value}"; break; }
-                        }
-                    }
-                    if (allPass) {
-                        count++;
-                        if (firstCounted == null) firstCounted = ally;
-                    }
-                    int hpPct = ally.Stats.HitPoints.ModifiedValue > 0
-                        ? (int)(100f * ally.HPLeft / ally.Stats.HitPoints.ModifiedValue) : 0;
-                    float dist = UnityEngine.Vector3.Distance(owner.Position, ally.Position);
-                    perAlly.Add($"{ally.CharacterName}(hp={hpPct}%,d={dist:F1}m):{(allPass ? "pass" : "fail@" + failReason)}");
-                }
-                if (!CompareCount(count, countThreshold, countOp)) {
-                    Log.Engine.Trace($"AllyBucket miss: count={count} {countOp} threshold={countThreshold} [{string.Join(", ", perAlly)}]");
+                    Log.Engine.Trace($"AllyBucket miss: {DescribeCountSets(sets, tally.Counts)} [{string.Join(", ", perAlly)}]");
                     return false;
                 }
                 // Count-only fallback so ConditionTarget resolves — see EvaluateEnemyBucket.
                 // Note: may latch the owner (AllyCount includes self by design).
-                if (matchedAlly == null) matchedAlly = firstCounted;
+                if (matchedAlly == null) matchedAlly = CountSets.FirstCountedAny(tally);
             }
 
             // Latch only after the whole bucket passed (see EvaluateEnemyBucket).
@@ -166,6 +145,17 @@ namespace WrathTactics.Engine {
             var latch = firstPinned ?? matchedAlly;
             if (latch != null) LastMatchedAlly = latch;
             return true;
+        }
+
+        // "set0[AllyCount HpPercent]: count=2 GreaterOrEqual threshold=3 -> miss; set1[...]: ...".
+        // One entry per count set so independent (CountSeparately) counts are visible in logs.
+        static string DescribeCountSets(List<CountSet> sets, int[] counts) {
+            var parts = new List<string>();
+            for (int i = 0; i < sets.Count; i++) {
+                string rows = string.Join("+", sets[i].Rows.Select(r => r.Property.ToString()));
+                parts.Add($"set{i}[{rows}]: count={counts[i]} {sets[i].Operator} threshold={sets[i].Threshold} -> {(sets[i].Passes(counts[i]) ? "ok" : "miss")}");
+            }
+            return string.Join("; ", parts);
         }
 
         // Count threshold = max usable Value2 across Count rows; 1 when NO row

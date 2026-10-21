@@ -156,6 +156,8 @@
   "preset.default.smite_evil": "Châtiment du Mal",
 
   "condition.with": "avec",
+  "condition.count.shared": "groupé",
+  "condition.count.own": "compte propre",
   "bool.yes": "Oui",
   "bool.no": "Non",
 
