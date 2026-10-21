@@ -337,6 +337,9 @@
   "enum.descriptor.Poison": "Яд",
   "enum.descriptor.Disease": "Болезнь",
   "enum.descriptor.Bleed": "Кровотечение",
+  "enum.ability_group.Healing": "Лечение",
+  "enum.ability_group.Control": "Контроль",
+  "enum.ability_group.Damage": "Урон",
 
   "enum.energy.Fire": "Огонь",
   "enum.energy.Cold": "Холод",

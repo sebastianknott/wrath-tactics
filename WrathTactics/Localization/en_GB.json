@@ -337,6 +337,9 @@
   "enum.descriptor.Poison": "Poison",
   "enum.descriptor.Disease": "Disease",
   "enum.descriptor.Bleed": "Bleed",
+  "enum.ability_group.Healing": "Healing",
+  "enum.ability_group.Control": "Control",
+  "enum.ability_group.Damage": "Damage",
 
   "enum.energy.Fire": "Fire",
   "enum.energy.Cold": "Cold",
