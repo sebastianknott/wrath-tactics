@@ -59,6 +59,7 @@
   "target.filter.ally": "Союзник:",
   "ally.picker.any": "(Любой союзник)",
 
+  "cooldown.uninterruptible": "Не прерывать (другие правила не могут отменить)",
   "cooldown.label": "Перезарядка (раунды):",
 
   "default.new_rule_name": "Новое правило",
