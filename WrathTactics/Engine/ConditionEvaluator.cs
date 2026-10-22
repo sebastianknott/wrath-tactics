@@ -31,6 +31,7 @@ namespace WrathTactics.Engine {
         // (matches HpPercent/AC shape). A stray access outside an active Evaluate
         // reads null and falls through to float.NaN → condition returns false.
         static ActionDef CurrentAction;
+        static string CurrentRuleId;
         static UnitEntityData CurrentOwner;
         // Cached party-best-AB for the duration of a single Evaluate call. NaN means
         // "not yet computed"; once computed, the same value is reused across all
@@ -56,6 +57,7 @@ namespace WrathTactics.Engine {
                 return true;
 
             CurrentAction = rule.Action;
+            CurrentRuleId = rule.Id;
             CurrentOwner = owner;
             BeginOptionPass();
             try {
@@ -67,6 +69,7 @@ namespace WrathTactics.Engine {
             } finally {
                 EndOptionPass();
                 CurrentAction = null;
+                CurrentRuleId = null;
                 CurrentOwner = null;
                 CurrentPartyBestAB = float.NaN;
                 CurrentPartyMaxLevel = -1;

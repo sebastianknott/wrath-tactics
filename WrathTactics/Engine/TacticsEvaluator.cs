@@ -514,6 +514,7 @@ namespace WrathTactics.Engine {
             ActiveRuleTracker.Reset();
             ConditionEvaluator.ResetEngagedTraceCache();
             ConditionEvaluator.ResetSlotTraceCache();
+            OptionCursor.ClearAll();
         }
 
         static string FormatTarget(ResolvedTarget target) {
