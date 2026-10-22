@@ -14,6 +14,10 @@ namespace WrathTactics.UI {
         Action onChanged;
         Action onDelete;
 
+        // Non-null on every GroupOption row except the first of its condition group: that first row owns the
+        // effect-group picker, the others bind to its group and only display it.
+        Condition groupSource;
+
         PopupSelector propertySelector;
 
         static readonly List<string> RangeBracketNames = new List<string> {
@@ -25,8 +29,9 @@ namespace WrathTactics.UI {
             nameof(RangeBracket.Long)
         };
 
-        public void Init(Condition condition, Action onChanged, Action onDelete) {
+        public void Init(Condition condition, Action onChanged, Action onDelete, Condition groupSource = null) {
             this.condition = condition;
+            this.groupSource = groupSource;
             this.onChanged = onChanged;
             this.onDelete = onDelete;
             BuildUI();
@@ -75,6 +80,7 @@ namespace WrathTactics.UI {
                     var validProps = GetPropertiesForSubject(condition.Subject);
                     if (!validProps.Contains(condition.Property) && validProps.Count > 0)
                         condition.Property = validProps[0];
+                    ApplyOptionDefaults();
                     onChanged?.Invoke();
                     Rebuild();
                 });
@@ -88,6 +94,7 @@ namespace WrathTactics.UI {
                 propNames, propIdx, v => {
                     var currentProps = GetPropertiesForSubject(condition.Subject);
                     if (v < currentProps.Count) condition.Property = currentProps[v];
+                    ApplyOptionDefaults();
                     onChanged?.Invoke();
                     Rebuild();
                 });
@@ -124,13 +131,23 @@ namespace WrathTactics.UI {
                     // GroupOption: effect group the option rows bind to. Stored in Value2 as the DebuffGroup name;
                     // the rows of one condition group must share it (the evaluator ignores rows naming another).
                     var groups = GroupOptionGroups;
-                    int gIdx = groups.FindIndex(g => g.ToString() == condition.Value2);
-                    if (gIdx < 0) { gIdx = 0; condition.Value2 = groups[0].ToString(); }
-                    PopupSelector.CreateInRow(root, "GroupOptionGroup", 0.14f,
-                        groups.Select(g => EnumLabels.For(g)).ToList(), gIdx, v => {
-                            condition.Value2 = groups[v].ToString();
-                            onChanged?.Invoke();
-                        });
+                    if (groupSource != null) {
+                        // Follower row: shows the group of the first GroupOption row (the evaluator applies it to all).
+                        var (grpLbl, _g) = UIHelpers.Create("GroupOptionGroupLabel", root.transform);
+                        Widgets.InRow(grpLbl, 0f, 0.14f);
+                        var sourceGroup = OptionBundling.GroupOf(groupSource);
+                        Widgets.InkLabel(grpLbl, sourceGroup == DebuffGroup.None ? "" : EnumLabels.For(sourceGroup), 14f,
+                            TextAlignmentOptions.MidlineLeft, Theme.InkMuted, italic: true);
+                    } else {
+                        // Defaults are written by ApplyOptionDefaults before the change is persisted, never while
+                        // building; a stale empty value just shows the first entry until the user picks.
+                        int gIdx = Math.Max(0, groups.FindIndex(g => g.ToString() == condition.Value2));
+                        PopupSelector.CreateInRow(root, "GroupOptionGroup", 0.14f,
+                            groups.Select(g => EnumLabels.For(g)).ToList(), gIdx, v => {
+                                condition.Value2 = groups[v].ToString();
+                                onChanged?.Invoke();
+                            });
+                    }
                 } else {
                     // AllyByName: ally picker (live PartyAndPets). Stored in Value2 as UniqueId.
                     CreateAllyPicker(root, 0.14f, "AllyByNamePicker",
@@ -425,6 +442,28 @@ namespace WrathTactics.UI {
 
             // Delete button
             Widgets.IconButton(root.transform, "DelBtn", Icon.X, Theme.IconSmall, () => onDelete?.Invoke());
+        }
+
+        // Defaults of the GroupOption subject, written BEFORE onChanged so the persisted row is complete (a default
+        // that exists only in the rebuilt UI would be saved as an empty Value2 / Value and the rule never fires).
+        void ApplyOptionDefaults() {
+            if (condition.Subject == ConditionSubject.GroupOption && groupSource == null
+                && OptionBundling.GroupOf(condition) == DebuffGroup.None)
+                condition.Value2 = GroupOptionGroups[0].ToString();
+            if (condition.Subject == ConditionSubject.GroupOption && condition.Property == ConditionProperty.OptionSource) {
+                var keys = GetValueKeysForProperty(condition.Property);
+                if (keys.Count > 0 && !keys.Contains(condition.Value)) condition.Value = keys[0];
+            }
+        }
+
+        /// <summary>
+        /// After a row was removed: the first GroupOption row of the group becomes the picker owner, so it must
+        /// hold a real effect group (a follower row carries none).
+        /// </summary>
+        public static void EnsureGroupOnFirstOptionRow(ConditionGroup group) {
+            var first = group.Conditions.FirstOrDefault(c => c.Subject == ConditionSubject.GroupOption);
+            if (first != null && OptionBundling.GroupOf(first) == DebuffGroup.None)
+                first.Value2 = GroupOptionGroups[0].ToString();
         }
 
         // Effect groups a GroupOption row can bind to (None is "no group" and not offered).

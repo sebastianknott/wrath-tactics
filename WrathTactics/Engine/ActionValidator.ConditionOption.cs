@@ -30,6 +30,10 @@ namespace WrathTactics.Engine {
         }
 
         static bool StillCastable(DebuffOption option, UnitEntityData target) {
+            if (target.Descriptor?.State?.IsFinallyDead ?? false) {
+                Log.Engine.Trace($"CastConditionOption: {target.CharacterName} is dead");
+                return false;
+            }
             var ability = option.Ability;
             if (option.InventorySource != null && option.InventorySource.Count <= 0) {
                 Log.Engine.Trace($"CastConditionOption: '{option.Name}' [{option.Kind}] gone from the inventory");

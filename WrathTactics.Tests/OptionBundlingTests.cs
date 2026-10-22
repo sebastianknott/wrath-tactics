@@ -31,53 +31,79 @@ namespace WrathTactics.Tests {
         }
 
         [Fact]
-        public void Bundle_without_option_rows_returns_the_same_conditions() {
+        public void Bundle_without_option_rows_returns_the_same_list_instance() {
             var conds = new List<Condition> { Plain(ConditionProperty.HpPercent), Plain(ConditionProperty.AC) };
-            var result = OptionBundling.Bundle(conds, out int dropped);
-            Assert.Equal(conds, result);
-            Assert.Equal(0, dropped);
+            Assert.Same(conds, OptionBundling.Bundle(conds));
         }
 
         [Fact]
-        public void Bundle_folds_option_rows_into_one_bundle_at_the_first_row_position() {
+        public void Bundle_is_placed_last_so_cheap_rows_short_circuit_first() {
             var a = Plain(ConditionProperty.HpPercent);
             var r1 = Row(ConditionProperty.SpellDCMinusSave, ConditionOperator.GreaterOrEqual, "5");
             var b = Plain(ConditionProperty.AC);
             var r2 = Row(ConditionProperty.OptionEffect, ConditionOperator.GreaterOrEqual, "4");
-            var result = OptionBundling.Bundle(new List<Condition> { a, r1, b, r2 }, out int dropped);
+            var result = OptionBundling.Bundle(new List<Condition> { a, r1, b, r2 });
 
             Assert.Equal(3, result.Count);
             Assert.Same(a, result[0]);
-            var bundle = Assert.IsType<OptionRowsBundle>(result[1]);
-            Assert.Same(b, result[2]);
+            Assert.Same(b, result[1]);
+            var bundle = Assert.IsType<OptionRowsBundle>(result[2]);
             Assert.Equal(new[] { r1, r2 }, bundle.Rows);
             Assert.Equal(DebuffGroup.ArmorClass, bundle.Group);
             Assert.Equal(ConditionSubject.GroupOption, bundle.Subject);
-            Assert.Equal(0, dropped);
         }
 
         [Fact]
-        public void Bundle_drops_rows_of_another_group_and_counts_them() {
+        public void Bundle_applies_the_first_group_to_all_rows_and_drops_none() {
             var r1 = Row(ConditionProperty.OptionEffect, ConditionOperator.GreaterOrEqual, "4", "ArmorClass");
             var r2 = Row(ConditionProperty.OptionEffect, ConditionOperator.GreaterOrEqual, "2", "Attack");
-            var r3 = Row(ConditionProperty.SpellDCMinusSave, ConditionOperator.GreaterOrEqual, "0", "ArmorClass");
-            var result = OptionBundling.Bundle(new List<Condition> { r1, r2, r3 }, out int dropped);
+            var r3 = Row(ConditionProperty.SpellDCMinusSave, ConditionOperator.GreaterOrEqual, "0", "");
+            var bundle = Assert.IsType<OptionRowsBundle>(Assert.Single(OptionBundling.Bundle(new List<Condition> { r1, r2, r3 })));
+            Assert.Equal(new[] { r1, r2, r3 }, bundle.Rows);
+            Assert.Equal(DebuffGroup.ArmorClass, bundle.Group);
+        }
 
-            var bundle = Assert.IsType<OptionRowsBundle>(Assert.Single(result));
-            Assert.Equal(new[] { r1, r3 }, bundle.Rows);
-            Assert.Equal(1, dropped);
+        [Fact]
+        public void Bundle_group_comes_from_the_first_row_with_a_valid_group() {
+            var r1 = Row(ConditionProperty.OptionEffect, ConditionOperator.GreaterOrEqual, "4", "");
+            var r2 = Row(ConditionProperty.OptionEffect, ConditionOperator.GreaterOrEqual, "4", "Speed");
+            var bundle = (OptionRowsBundle)OptionBundling.Bundle(new List<Condition> { r1, r2 })[0];
+            Assert.Equal(DebuffGroup.Speed, bundle.Group);
         }
 
         [Fact]
         public void Bundle_takes_the_group_from_the_first_row() {
             var r1 = Row(ConditionProperty.OptionEffect, ConditionOperator.GreaterOrEqual, "4", "Speed");
-            var result = OptionBundling.Bundle(new List<Condition> { r1 }, out _);
+            var result = OptionBundling.Bundle(new List<Condition> { r1 });
             Assert.Equal(DebuffGroup.Speed, ((OptionRowsBundle)result[0]).Group);
         }
 
         [Fact]
+        public void Unparsable_threshold_never_matches() {
+            var row = Row(ConditionProperty.OptionEffect, ConditionOperator.GreaterOrEqual, "abc");
+            Assert.False(OptionBundling.RowMatches(row, Values(effect: 5f)));
+            var lt = Row(ConditionProperty.OptionEffect, ConditionOperator.LessThan, "");
+            Assert.False(OptionBundling.RowMatches(lt, Values(effect: -1f)));
+        }
+
+        [Fact]
+        public void Count_path_is_not_capped() {
+            Assert.True(OptionBundling.CapReached(1000));
+            Assert.False(OptionBundling.CapReached(1000, enforce: false));
+        }
+
+        [Theory]
+        [InlineData(true, false, true)]
+        [InlineData(true, true, false)]
+        [InlineData(false, false, false)]
+        [InlineData(false, true, false)]
+        public void Cursor_is_cleared_only_when_the_bundle_ran_uncapped(bool evaluated, bool capHit, bool expected) {
+            Assert.Equal(expected, OptionBundling.ShouldClearCursor(evaluated, capHit));
+        }
+
+        [Fact]
         public void FindBundle_returns_the_bundle_or_null() {
-            var result = OptionBundling.Bundle(new List<Condition> { Row(ConditionProperty.OptionEffect, ConditionOperator.Equal, "1") }, out _);
+            var result = OptionBundling.Bundle(new List<Condition> { Row(ConditionProperty.OptionEffect, ConditionOperator.Equal, "1") });
             Assert.NotNull(OptionBundling.FindBundle(result));
             Assert.Null(OptionBundling.FindBundle(new List<Condition> { Plain(ConditionProperty.AC) }));
         }
@@ -120,13 +146,6 @@ namespace WrathTactics.Tests {
             var row = Row(ConditionProperty.OptionEffect, ConditionOperator.GreaterOrEqual, "4");
             Assert.True(OptionBundling.RowMatches(row, Values(effect: 4f)));
             Assert.False(OptionBundling.RowMatches(row, Values(effect: 3.5f)));
-        }
-
-        [Fact]
-        public void Numeric_row_with_unparsable_value_compares_against_zero() {
-            var row = Row(ConditionProperty.OptionEffect, ConditionOperator.GreaterThan, "abc");
-            Assert.True(OptionBundling.RowMatches(row, Values(effect: 1f)));
-            Assert.False(OptionBundling.RowMatches(row, Values(effect: 0f)));
         }
 
         [Theory]
@@ -200,7 +219,7 @@ namespace WrathTactics.Tests {
         [Fact]
         public void Cursor_set_get_clear_roundtrip() {
             OptionCursor.ClearAll();
-            var key = OptionCursor.KeyFor("owner", 7);
+            var key = OptionCursor.KeyFor("owner", "rule-7");
             Assert.Null(OptionCursor.Get(key));
             OptionCursor.Set(key, "enemy-3");
             Assert.Equal("enemy-3", OptionCursor.Get(key));
@@ -213,10 +232,10 @@ namespace WrathTactics.Tests {
         [Fact]
         public void Cursor_keys_separate_owner_and_rule() {
             OptionCursor.ClearAll();
-            OptionCursor.Set(OptionCursor.KeyFor("a", 1), "x");
-            Assert.Null(OptionCursor.Get(OptionCursor.KeyFor("b", 1)));
-            Assert.Null(OptionCursor.Get(OptionCursor.KeyFor("a", 2)));
-            Assert.NotEqual(OptionCursor.KeyFor("a", 12), OptionCursor.KeyFor("a1", 2));
+            OptionCursor.Set(OptionCursor.KeyFor("a", "r1"), "x");
+            Assert.Null(OptionCursor.Get(OptionCursor.KeyFor("b", "r1")));
+            Assert.Null(OptionCursor.Get(OptionCursor.KeyFor("a", "r2")));
+            Assert.NotEqual(OptionCursor.KeyFor("a", "12"), OptionCursor.KeyFor("a1", "2"));
         }
     }
 }
