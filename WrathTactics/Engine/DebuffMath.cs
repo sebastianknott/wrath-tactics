@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using Kingmaker.UnitLogic.Mechanics.Components;
 using UnityEngine;
 using WrathTactics.Models;
@@ -150,6 +151,65 @@ namespace WrathTactics.Engine {
             public LockTier Tier;
             public int SpellLevel;
             public DebuffSourceKind Kind;
+        }
+
+        /// <summary>
+        /// An option whose expected value is not above epsilon cannot change the target (a save that always
+        /// holds, SR that always stops it). It must never be picked: EndsOnDamage sorts ahead of EV, so a zero
+        /// option would otherwise beat a real one.
+        /// </summary>
+        internal static bool CanLand(float ev) {
+            return ev > ScoreEpsilon;
+        }
+
+        // Sort class of the search: effects that end on damage are tried last in damage-oriented groups.
+        static int SortClass(DebuffScore s, DebuffGroup group) {
+            return group != DebuffGroup.Incapacitated && s.EndsOnDamage ? 1 : 0;
+        }
+
+        /// <summary>Indices of the bounds in the order the search measures them: class ascending, bound descending, stable.</summary>
+        internal static List<int> OrderByBound(IReadOnlyList<DebuffScore> bounds, DebuffGroup group) {
+            var order = new List<int>(bounds.Count);
+            for (int i = 0; i < bounds.Count; i++) order.Add(i);
+            return order.OrderBy(i => SortClass(bounds[i], group)).ThenByDescending(i => bounds[i].Ev).ToList();
+        }
+
+        /// <summary>
+        /// True when a candidate with this upper bound cannot beat the best measured score. Within epsilon the
+        /// bound still counts as a tie that the spell-level tiebreak may decide.
+        /// </summary>
+        internal static bool CannotBeat(DebuffScore bound, DebuffScore best, DebuffGroup group) {
+            int cb = SortClass(bound, group), cbest = SortClass(best, group);
+            if (cb != cbest) return cb > cbest;
+            return bound.Ev + ScoreEpsilon < best.Ev;
+        }
+
+        /// <summary>
+        /// The search over upper bounds: visits candidates by (class, bound descending), measures one only
+        /// while it can still beat the best measured so far, and stops at the first that cannot (pruning, which
+        /// spares the expensive DC and SR measurements). measure returns the final score, or null when the
+        /// candidate is rejected. Returns the index of the best candidate, -1 when none survived.
+        /// </summary>
+        internal static int Pick(IReadOnlyList<DebuffScore> bounds, Func<int, DebuffScore?> measure,
+                                 DebuffGroup group, out int pruned) {
+            pruned = 0;
+            var order = OrderByBound(bounds, group);
+            int best = -1;
+            DebuffScore bestScore = default(DebuffScore);
+            for (int k = 0; k < order.Count; k++) {
+                int i = order[k];
+                if (best >= 0 && CannotBeat(bounds[i], bestScore, group)) {
+                    pruned = order.Count - k;
+                    break;
+                }
+                var measured = measure(i);
+                if (!measured.HasValue) continue;
+                if (best < 0 || Compare(measured.Value, bestScore, group) < 0) {
+                    best = i;
+                    bestScore = measured.Value;
+                }
+            }
+            return best;
         }
 
         /// <summary>

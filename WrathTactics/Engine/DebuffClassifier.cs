@@ -34,12 +34,19 @@ namespace WrathTactics.Engine {
     /// AddFactContextActions (Glitterdust's blindness lives two buffs deep).
     /// </summary>
     internal static class DebuffClassifier {
-        static readonly Dictionary<string, DebuffProfile> s_cache = new Dictionary<string, DebuffProfile>();
+        // Keyed by blueprint reference: this is read for every candidate every tick, and an AssetGuid.ToString()
+        // would allocate a string each time.
+        sealed class ReferenceComparer : IEqualityComparer<BlueprintAbility> {
+            public bool Equals(BlueprintAbility x, BlueprintAbility y) { return ReferenceEquals(x, y); }
+            public int GetHashCode(BlueprintAbility obj) { return System.Runtime.CompilerServices.RuntimeHelpers.GetHashCode(obj); }
+        }
+
+        static readonly Dictionary<BlueprintAbility, DebuffProfile> s_cache =
+            new Dictionary<BlueprintAbility, DebuffProfile>(new ReferenceComparer());
 
         internal static DebuffProfile Get(BlueprintAbility bp) {
             if (bp == null) return DebuffProfile.NotADebuff;
-            string guid = bp.AssetGuid.ToString();
-            if (s_cache.TryGetValue(guid, out var cached)) return cached;
+            if (s_cache.TryGetValue(bp, out var cached)) return cached;
             DebuffProfile profile;
             try {
                 profile = new Reader(bp).Read();
@@ -49,7 +56,7 @@ namespace WrathTactics.Engine {
                 Log.Engine.Warn($"DebuffClassifier: '{bp.name}' unreadable ({ex.GetType().Name}: {ex.Message}) - treated as no debuff");
                 profile = DebuffProfile.NotADebuff;
             }
-            s_cache[guid] = profile;
+            s_cache[bp] = profile;
             return profile;
         }
 
@@ -115,16 +122,15 @@ namespace WrathTactics.Engine {
             bool DecideAllySafe() {
                 bool canEnemies = m_bp.CanTargetEnemies || (m_touch != null && m_touch.CanTargetEnemies);
                 bool canPoint = m_bp.CanTargetPoint;
-                if (!canEnemies) { m_profile.UnsafeReason = "cannot target enemies"; return false; }
-                if (m_spawnsArea) { m_profile.UnsafeReason = "leaves an area effect behind"; return false; }
-                if (m_coneOrLine) { m_profile.UnsafeReason = "cone or line"; return false; }
-                if (m_profile.Area != DebuffAreaKind.Single && m_areaUnfiltered) {
-                    m_profile.UnsafeReason = "area not limited to enemies"; return false;
-                }
-                if (m_profile.Area == DebuffAreaKind.Single && canPoint) {
-                    m_profile.UnsafeReason = "point target"; return false;
-                }
-                return true;
+                if (DebuffMath.IsAllySafe(canEnemies, m_spawnsArea, canPoint, m_profile.Area, !m_areaUnfiltered, m_coneOrLine))
+                    return true;
+                // Same order as the pure decision, for the reason shown in the log.
+                if (!canEnemies) m_profile.UnsafeReason = "cannot target enemies";
+                else if (m_spawnsArea) m_profile.UnsafeReason = "leaves an area effect behind";
+                else if (m_coneOrLine) m_profile.UnsafeReason = "cone or line";
+                else if (m_profile.Area == DebuffAreaKind.Single) m_profile.UnsafeReason = "point target";
+                else m_profile.UnsafeReason = "area not limited to enemies";
+                return false;
             }
 
             void ReadEffects(BlueprintAbility bp) {
@@ -213,7 +219,8 @@ namespace WrathTactics.Engine {
             void AnalyzeBuff(BlueprintBuff buff, WalkContext ctx, ContextActionApplyBuff apply) {
                 if (buff == null) return;
                 string guid = buff.AssetGuid.ToString();
-                if (!m_visitedBuffs.Add(guid)) return;
+                // The same buff may be applied on failure and on success (different gates): both count.
+                if (!m_visitedBuffs.Add(guid + "|" + (int)ctx.Gate)) return;
 
                 var added = new List<DebuffEntry>();
                 bool endsOnDamage = false, saveEachRound = false;
@@ -260,9 +267,11 @@ namespace WrathTactics.Engine {
                 m_profile.AppliedBuffGuids.Add(guid);
                 for (int i = before; i < m_profile.Entries.Count; i++) {
                     var e = m_profile.Entries[i];
-                    if (e.BuffGuid.Length == 0) e.BuffGuid = guid;
-                    if (endsOnDamage) e.EndsOnDamage = true;
-                    if (saveEachRound) e.SaveEachRound = true;
+                    // Entries a nested walk added already carry their own buff GUID (and their own traits).
+                    bool own = e.BuffGuid.Length == 0;
+                    if (own) e.BuffGuid = guid;
+                    if (own && endsOnDamage) e.EndsOnDamage = true;
+                    if (own && saveEachRound) e.SaveEachRound = true;
                     if (e.DurationRounds < 0f && e.Duration == null && !e.Permanent) ApplyDuration(e, apply);
                 }
             }
