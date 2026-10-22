@@ -85,7 +85,11 @@ namespace WrathTactics.Engine {
                 Log.Engine.Trace($"SpellDCMinusSave: FindAbility returned null (guid={CurrentAction.AbilityId})");
                 return float.NaN;
             }
+            return ComputeDCMinusSaveCore(target, ability);
+        }
 
+        // Measurement for an explicit ability; CurrentOwner is the caster (set by the wrapper or by MeasureDCMinusSave).
+        static float ComputeDCMinusSaveCore(UnitEntityData target, AbilityData ability) {
             Kingmaker.EntitySystem.Stats.SavingThrowType saveType;
             string saveTypeSource;
             if (ability.MagicHackData != null) {
@@ -220,7 +224,11 @@ namespace WrathTactics.Engine {
                 Log.Engine.Trace($"SpellResistMargin: FindAbility returned null (guid={CurrentAction.AbilityId})");
                 return float.NaN;
             }
+            return ComputeSpellResistMarginCore(target, ability);
+        }
 
+        // Measurement for an explicit ability; CurrentOwner is the caster (set by the wrapper or by MeasureSpellResistMargin).
+        static float ComputeSpellResistMarginCore(UnitEntityData target, AbilityData ability) {
             // RuleSpellResistanceCheck checks the deliver blueprint of the executing ability, else the spell itself.
             var bp = ability.GetDeliverBlueprint(false) ?? ability.Blueprint;
             var part = target.Get<UnitPartSpellResistance>();

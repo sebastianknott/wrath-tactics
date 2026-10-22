@@ -47,6 +47,7 @@ namespace WrathTactics.Engine {
             LastMatchedEnemy = null;
             LastMatchedAlly = null;
             LastMatchedSelf = null;
+            DebuffSelection.Clear();
         }
 
         public static bool Evaluate(TacticsRule rule, UnitEntityData owner) {
