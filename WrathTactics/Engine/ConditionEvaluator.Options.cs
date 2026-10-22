@@ -81,7 +81,7 @@ namespace WrathTactics.Engine {
             var ranked = ActionValidator.RankDebuffOptions(CurrentOwner, enemy, bundle.Group, CurrentAction.Sources);
             s_optionPairs += ranked.Count > 0 ? ranked.Count : 1;
             foreach (var choice in ranked) {
-                var values = new OptionValues { Dcms = choice.Dcms, Srm = choice.Srm, Effect = choice.Magnitude, Kind = choice.Option.Kind };
+                var values = new OptionValues { Dcms = choice.Dcms, Srm = choice.Srm, Effect = choice.Magnitude, Hits = choice.Hits, Kind = choice.Option.Kind };
                 if (!OptionBundling.AllRowsMatch(bundle.Rows, values)) continue;
                 s_optionByEnemy[enemy] = choice;
                 Log.Engine.Trace($"GroupOption {bundle.Group}: '{choice.Option.Name}' [{choice.Option.Kind}] satisfies all rows for {enemy.CharacterName}");
