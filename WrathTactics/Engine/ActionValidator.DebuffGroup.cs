@@ -6,6 +6,7 @@ using Kingmaker.Enums;
 using Kingmaker.EntitySystem.Entities;
 using Kingmaker.UnitLogic;
 using Kingmaker.Utility;
+using UnityEngine;
 using WrathTactics.Logging;
 using WrathTactics.Models;
 
@@ -51,6 +52,7 @@ namespace WrathTactics.Engine {
 
             var rejected = new List<string>();
             var stats = ReadTargetStats(target);
+            var enemyPositions = EnemyPositions(owner);
             var candidates = new List<Scored>();
             foreach (var option in options) {
                 string reason = RejectReason(option, group, target);
@@ -61,9 +63,11 @@ namespace WrathTactics.Engine {
                 }
                 int cl = CasterLevelOf(owner, option);
                 var scored = new Scored { Option = option };
-                scored.Choice = new DebuffChoice { Option = option, Hits = 1, PFail = 1f, PSr = 1f };
+                int hits = HitsOf(option, target, enemyPositions);
+                scored.Choice = new DebuffChoice { Option = option, Hits = hits, PFail = 1f, PSr = 1f };
                 scored.Score = new DebuffMath.DebuffScore {
-                    Ev = UpperBound(owner, option, group, cl, stats),
+                    // The bound must include the hit count: an area option with many hits outranks its single value.
+                    Ev = UpperBound(owner, option, group, cl, stats) * hits,
                     EndsOnDamage = EndsOnDamageIn(option, group),
                     Tier = TierIn(option, group),
                     SpellLevel = option.SpellLevel,
@@ -104,7 +108,7 @@ namespace WrathTactics.Engine {
 
             var ch = best.Choice;
             Log.Engine.Debug($"DebuffGroup {group} {owner.CharacterName} -> {target.CharacterName}: picked '{best.Option.Name}' [{best.Option.Kind}] "
-                + $"EV={ch.Ev:F2} (effect {ch.Magnitude:F1}, pSave {ch.PFail:F2}, pSR {ch.PSr:F2}, hits {ch.Hits})"
+                + $"EV={ch.Ev:F2} (effect {ch.Magnitude:F1}, pSave {ch.PFail:F2}, pSR {ch.PSr:F2}, hits {ch.Hits} within {ch.Option.Profile.RadiusMeters:F1} m)"
                 + (rejected.Count > 0 ? "; rejected: " + string.Join(", ", rejected) : "")
                 + (pruned > 0 ? $"; {pruned} pruned" : ""));
             return ch;
@@ -123,6 +127,7 @@ namespace WrathTactics.Engine {
 
             var stats = ReadTargetStats(target);
             var rejected = new List<string>();
+            var enemyPositions = EnemyPositions(owner);
             var scored = new List<Scored>();
             foreach (var option in DebuffOptionEnumerator.Enumerate(owner, group, mask)) {
                 string reason = RejectReason(option, group, target);
@@ -131,7 +136,7 @@ namespace WrathTactics.Engine {
                     continue;
                 }
                 var c = new Scored { Option = option };
-                c.Choice = new DebuffChoice { Option = option, Hits = 1, PFail = 1f, PSr = 1f };
+                c.Choice = new DebuffChoice { Option = option, Hits = HitsOf(option, target, enemyPositions), PFail = 1f, PSr = 1f };
                 c.Score = new DebuffMath.DebuffScore {
                     EndsOnDamage = EndsOnDamageIn(option, group),
                     Tier = TierIn(option, group),
@@ -143,6 +148,15 @@ namespace WrathTactics.Engine {
             scored.Sort((a, b) => DebuffMath.Compare(a.Score, b.Score, group));
             foreach (var c in scored) result.Add(c.Choice);
             return result;
+        }
+
+        static List<Vector3> EnemyPositions(UnitEntityData owner) {
+            return TargetResolver.VisibleEnemies(owner).Select(e => e.Position).ToList();
+        }
+
+        // Enemies the option hits when cast at the target; area options count the enemies around the target.
+        static int HitsOf(DebuffOption option, UnitEntityData target, List<Vector3> enemyPositions) {
+            return DebuffMath.HitsFor(option.Profile.Area, option.Profile.RadiusMeters, enemyPositions, target.Position);
         }
 
         // Cheap per-option exclusions that need no DC/SR measurement.

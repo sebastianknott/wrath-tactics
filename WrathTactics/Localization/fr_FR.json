@@ -204,6 +204,7 @@
   "enum.property.SpellResistMargin": "Pénétration − RM",
   "enum.property.OptionEffect": "Effet de l'option",
   "enum.property.OptionSource": "Source de l'option",
+  "enum.property.OptionEnemiesInRadius": "Ennemis dans le rayon",
   "enum.debuffsource.Spell": "Sort",
   "enum.debuffsource.ClassAbility": "Capacité de classe",
   "enum.debuffsource.ItemAbility": "Capacité d'objet",

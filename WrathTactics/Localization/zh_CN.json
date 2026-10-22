@@ -204,6 +204,7 @@
   "enum.property.SpellResistMargin": "穿透 − 法术抗力",
   "enum.property.OptionEffect": "选项效果",
   "enum.property.OptionSource": "选项来源",
+  "enum.property.OptionEnemiesInRadius": "半径内敌人",
   "enum.debuffsource.Spell": "法术",
   "enum.debuffsource.ClassAbility": "职业能力",
   "enum.debuffsource.ItemAbility": "物品能力",

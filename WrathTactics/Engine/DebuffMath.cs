@@ -125,6 +125,16 @@ namespace WrathTactics.Engine {
             return n;
         }
 
+        /// <summary>
+        /// Enemies an option hits when cast at the pick: area options around an enemy count the enemies within the
+        /// radius of the pick (the pick itself included, so at least 1); single-target and chain options count 1
+        /// (WTW-30 D10: chains are not modelled).
+        /// </summary>
+        internal static int HitsFor(DebuffAreaKind area, float radiusMeters, IEnumerable<Vector3> enemyPositions, Vector3 center) {
+            if (area != DebuffAreaKind.AroundEnemy || radiusMeters <= 0f) return 1;
+            return Math.Max(1, CountWithin(enemyPositions, center, radiusMeters));
+        }
+
         /// <summary>True when the profile flags allow casting at an enemy without risk to allies.</summary>
         internal static bool IsAllySafe(bool canTargetEnemies, bool spawnsAreaEffect, bool canTargetPoint,
                                         DebuffAreaKind area, bool areaFilteredToEnemies, bool coneOrLine) {
