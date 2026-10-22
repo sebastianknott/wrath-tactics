@@ -18,6 +18,10 @@ namespace WrathTactics.Engine {
         public float PFail;
         public float PSr;
         public int Hits;
+        /// <summary>Measured DC minus save for the pair; NaN when no save is computable.</summary>
+        public float Dcms;
+        /// <summary>Measured spell-resist margin for the pair; NaN when not computable.</summary>
+        public float Srm;
     }
 
     public static partial class ActionValidator {
@@ -104,6 +108,41 @@ namespace WrathTactics.Engine {
                 + (rejected.Count > 0 ? "; rejected: " + string.Join(", ", rejected) : "")
                 + (pruned > 0 ? $"; {pruned} pruned" : ""));
             return ch;
+        }
+
+        /// <summary>
+        /// Every usable option of the group against this target with its measured numbers, best first (same order
+        /// as FindBestDebuff's pick). Unlike FindBestDebuff nothing is pruned: a GroupOption condition row may
+        /// accept an option the plain ranking would have skipped. Options rejected by the cheap checks or found
+        /// immune are absent. Used by the condition bundle (WTW-30 phase b).
+        /// </summary>
+        internal static List<DebuffChoice> RankDebuffOptions(UnitEntityData owner, UnitEntityData target,
+                                                             DebuffGroup group, SpellSourceMask mask) {
+            var result = new List<DebuffChoice>();
+            if (group == DebuffGroup.None || target == null) return result;
+
+            var stats = ReadTargetStats(target);
+            var rejected = new List<string>();
+            var scored = new List<Scored>();
+            foreach (var option in DebuffOptionEnumerator.Enumerate(owner, group, mask)) {
+                string reason = RejectReason(option, group, target);
+                if (reason != null) {
+                    Log.Engine.Trace($"DebuffGroup {group}: '{option.Name}' [{option.Kind}] rejected ({reason})");
+                    continue;
+                }
+                var c = new Scored { Option = option };
+                c.Choice = new DebuffChoice { Option = option, Hits = 1, PFail = 1f, PSr = 1f };
+                c.Score = new DebuffMath.DebuffScore {
+                    EndsOnDamage = EndsOnDamageIn(option, group),
+                    Tier = TierIn(option, group),
+                    SpellLevel = option.SpellLevel,
+                    Kind = option.Kind,
+                };
+                if (Measure(owner, target, c, group, stats, rejected)) scored.Add(c);
+            }
+            scored.Sort((a, b) => DebuffMath.Compare(a.Score, b.Score, group));
+            foreach (var c in scored) result.Add(c.Choice);
+            return result;
         }
 
         // Cheap per-option exclusions that need no DC/SR measurement.
@@ -234,6 +273,8 @@ namespace WrathTactics.Engine {
             c.Choice.Magnitude = raw;
             c.Choice.PFail = pFail;
             c.Choice.PSr = pSr;
+            c.Choice.Dcms = dcms;
+            c.Choice.Srm = srm;
             c.Score.Ev = c.Choice.Ev;
             return true;
         }

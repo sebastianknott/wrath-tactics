@@ -21,7 +21,8 @@ namespace WrathTactics.Models {
         EnemyHighestHD,      // the single enemy with highest HD
         EnemyLowestHD,       // the single enemy with lowest HD
         AllyByName,          // a specific ally pinned by UniqueId stored in Condition.Value2
-        EnemyNearest         // the single enemy closest to the rule owner
+        EnemyNearest,        // the single enemy closest to the rule owner
+        GroupOption          // 22: a debuff option of the effect group named in Value2 (WTW-30); rows bind to ONE option
     }
 
     public enum ConditionProperty {
@@ -60,7 +61,9 @@ namespace WrathTactics.Models {
         NegativeLevels,           // Yes/No — UnitPartNegativeLevels.Count > 0 (temporary + permanent energy drain); for Restoration rules.
         HpFlat,                   // numeric — current hit points, flat (HPLeft = HitPoints.ModifiedValue − Damage; temp HP excluded, same expression as the engine's AbilityTargetHPCondition Power-Word gate)
         WieldsRangedWeapon,       // Yes/No — current weapon is ranged (GetFirstWeapon → Blueprint.IsRanged, i.e. AttackType Ranged/RangedTouch); for "focus the archers" rules
-        SpellResistMargin         // numeric — caster level + penetration bonuses − target spell resistance for the rule's own [Then] spell; Enemy-scope; +99 = no SR check / no SR, −99 = immune
+        SpellResistMargin,        // numeric — caster level + penetration bonuses − target spell resistance for the rule's own [Then] spell; Enemy-scope; +99 = no SR check / no SR, −99 = immune
+        OptionEffect,             // numeric — magnitude of the GroupOption's effect (stat penalty points, or expected lock rounds for Incapacitated); GroupOption only
+        OptionSource              // value-list — DebuffSourceKind name of the GroupOption (Spell/ClassAbility/…); =/!=; GroupOption only
     }
 
     public enum ConditionOperator {

@@ -104,9 +104,12 @@ namespace WrathTactics.Engine {
                     abilitySlot = choice.Value.Option.Ability.RuntimeActionType;
                     return true;
                 }
-                case ActionType.CastConditionOption:
-                    // Bound to a GroupOption condition row (WTW-30 phase b); nothing to cast without one.
-                    return false;
+                case ActionType.CastConditionOption: {
+                    if (!CanExecuteConditionOption(owner, unit, out var optionChoice)) return false;
+                    DebuffSelection.Remember(owner, unit, optionChoice);
+                    abilitySlot = optionChoice.Option.Ability.RuntimeActionType;
+                    return true;
+                }
                 default:
                     return false;
             }

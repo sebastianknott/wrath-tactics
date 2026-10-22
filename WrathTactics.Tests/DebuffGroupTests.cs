@@ -10,6 +10,22 @@ namespace WrathTactics.Tests {
             Assert.Equal(12, (int)ActionType.CastConditionOption);
         }
 
+        [Fact]
+        public void GroupOption_subject_is_appended_after_EnemyNearest() {
+            Assert.Equal(22, (int)ConditionSubject.GroupOption);
+        }
+
+        // Pinned per branch: patched appends other ConditionProperty members first (local-fixups.sh rewrites these).
+        [Fact]
+        public void OptionEffect_property_index_is_stable() {
+            Assert.Equal(36, (int)ConditionProperty.OptionEffect);
+        }
+
+        [Fact]
+        public void OptionSource_property_index_is_stable() {
+            Assert.Equal(37, (int)ConditionProperty.OptionSource);
+        }
+
         [Theory]
         [InlineData(DebuffGroup.None, 0)]
         [InlineData(DebuffGroup.ArmorClass, 1)]
