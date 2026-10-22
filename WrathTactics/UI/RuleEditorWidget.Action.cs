@@ -36,6 +36,12 @@ namespace WrathTactics.UI {
                     var defaultBracket = TargetDefaults.MoveBracketForAction((ActionType)idx, rule.Action.MoveWithin);
                     if (defaultBracket.HasValue) rule.Action.MoveWithin = defaultBracket.Value;
                     rule.Action.DebuffGroup = DebuffDefaults.GroupFor((ActionType)idx, rule.Action.DebuffGroup);
+                    if ((ActionType)idx == ActionType.CastDebuffGroup) {
+                        // Metamagic rod and reservoir boost belong to CastSpell; a debuff cast never applies them.
+                        rule.Action.MetamagicRod = null;
+                        rule.Action.Reservoir = ReservoirBoost.None;
+                        rule.Action.Sources = DebuffDefaults.SourcesFor(ActionType.CastDebuffGroup, rule.Action.Sources);
+                    }
                     if ((ActionType)idx != ActionType.CastSpell
                         && (ActionType)idx != ActionType.CastAbility
                         && (ActionType)idx != ActionType.CastDebuffGroup) {
@@ -247,6 +253,9 @@ namespace WrathTactics.UI {
                     rule.Action.Type = ActionType.Heal;
                     rule.Action.AbilityId = "";
                     rule.Action.Sources = SpellSourceMask.All;
+                    rule.Action.DebuffGroup = DebuffGroup.None;
+                    var healTarget = TargetDefaults.ForHealFromDebuff(rule.Target.Type);
+                    if (healTarget.HasValue) rule.Target.Type = healTarget.Value;
                     PersistEdit();
                     RebuildBody();
                     return;

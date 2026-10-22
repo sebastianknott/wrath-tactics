@@ -53,12 +53,12 @@ namespace WrathTactics.Engine {
             var rejected = new List<string>();
             var stats = ReadTargetStats(target);
             var enemyPositions = EnemyPositions(owner);
+            var targetBuffs = TargetBuffGuids(target);
             var candidates = new List<Scored>();
             foreach (var option in options) {
-                string reason = RejectReason(option, group, target);
+                string reason = RejectReason(option, group, target, targetBuffs);
                 if (reason != null) {
                     rejected.Add($"{option.Name} ({reason})");
-                    Log.Engine.Trace($"DebuffGroup {group}: '{option.Name}' [{option.Kind}] rejected ({reason})");
                     continue;
                 }
                 int cl = CasterLevelOf(owner, option);
@@ -76,30 +76,12 @@ namespace WrathTactics.Engine {
                 candidates.Add(scored);
             }
 
-            // Preferred class first (effects that survive damage), then by upper bound descending.
-            bool damageOriented = group != DebuffGroup.Incapacitated;
-            candidates.Sort((a, b) => {
-                int ca = damageOriented && a.Score.EndsOnDamage ? 1 : 0;
-                int cb = damageOriented && b.Score.EndsOnDamage ? 1 : 0;
-                if (ca != cb) return ca.CompareTo(cb);
-                return b.Score.Ev.CompareTo(a.Score.Ev);
-            });
-
-            Scored best = null;
-            int pruned = 0;
-            foreach (var c in candidates) {
-                if (best != null) {
-                    int cClass = damageOriented && c.Score.EndsOnDamage ? 1 : 0;
-                    int bClass = damageOriented && best.Score.EndsOnDamage ? 1 : 0;
-                    // Sorted by (class, bound): once one candidate cannot beat the best, none after it can.
-                    if (cClass > bClass || (cClass == bClass && c.Score.Ev < best.Score.Ev)) {
-                        pruned = candidates.Count - candidates.IndexOf(c);
-                        break;
-                    }
-                }
-                if (!Measure(owner, target, c, group, stats, rejected)) continue;
-                if (best == null || DebuffMath.Compare(c.Score, best.Score, group) < 0) best = c;
-            }
+            // Visit by (class, bound descending); the pure search measures lazily and prunes (DebuffMath.Pick).
+            var bounds = candidates.Select(c => c.Score).ToList();
+            int bestIndex = DebuffMath.Pick(bounds,
+                i => Measure(owner, target, candidates[i], group, stats, rejected) ? candidates[i].Score : (DebuffMath.DebuffScore?)null,
+                group, out int pruned);
+            Scored best = bestIndex < 0 ? null : candidates[bestIndex];
 
             if (best == null) {
                 Log.Engine.Trace($"DebuffGroup {group}: no option for {target.CharacterName}");
@@ -128,9 +110,10 @@ namespace WrathTactics.Engine {
             var stats = ReadTargetStats(target);
             var rejected = new List<string>();
             var enemyPositions = EnemyPositions(owner);
+            var targetBuffs = TargetBuffGuids(target);
             var scored = new List<Scored>();
             foreach (var option in DebuffOptionEnumerator.Enumerate(owner, group, mask)) {
-                string reason = RejectReason(option, group, target);
+                string reason = RejectReason(option, group, target, targetBuffs);
                 if (reason != null) {
                     Log.Engine.Trace($"DebuffGroup {group}: '{option.Name}' [{option.Kind}] rejected ({reason})");
                     continue;
@@ -145,8 +128,9 @@ namespace WrathTactics.Engine {
                 };
                 if (Measure(owner, target, c, group, stats, rejected)) scored.Add(c);
             }
-            scored.Sort((a, b) => DebuffMath.Compare(a.Score, b.Score, group));
-            foreach (var c in scored) result.Add(c.Choice);
+            // Stable order, so equal scores keep the enumeration order from one tick to the next.
+            var byScore = Comparer<Scored>.Create((a, b) => DebuffMath.Compare(a.Score, b.Score, group));
+            foreach (var c in scored.OrderBy(c => c, byScore)) result.Add(c.Choice);
             return result;
         }
 
@@ -159,22 +143,35 @@ namespace WrathTactics.Engine {
             return DebuffMath.HitsFor(option.Profile.Area, option.Profile.RadiusMeters, enemyPositions, target.Position);
         }
 
+        // Exact blueprint GUIDs of the buffs on the target, built once per search (not once per option).
+        static HashSet<string> TargetBuffGuids(UnitEntityData target) {
+            var set = new HashSet<string>();
+            foreach (var buff in target.Buffs.RawFacts) set.Add(buff.Blueprint.AssetGuid.ToString());
+            return set;
+        }
+
         // Cheap per-option exclusions that need no DC/SR measurement.
-        static string RejectReason(DebuffOption option, DebuffGroup group, UnitEntityData target) {
+        static string RejectReason(DebuffOption option, DebuffGroup group, UnitEntityData target, HashSet<string> targetBuffs) {
             var ability = option.Ability;
             if (!ability.CanTargetPoint && !ability.CanTarget(new TargetWrapper(target))) return "cannot-target";
-            if (AlreadyAffected(option, target)) return "already-affected";
+            if (AlreadyAffected(option, group, target, targetBuffs)) return "already-affected";
             if (ImmuneToAllConditions(option, group, target)) return "immune";
             return null;
         }
 
-        // Exact blueprint GUID of a buff this option applies, already on the target (never a substring match).
-        static bool AlreadyAffected(DebuffOption option, UnitEntityData target) {
-            var guids = option.Profile.AppliedBuffGuids;
-            if (guids.Count == 0) return false;
-            foreach (var buff in target.Buffs.RawFacts)
-                if (guids.Contains(buff.Blueprint.AssetGuid.ToString())) return true;
-            return false;
+        // Already affected: an exact-GUID buff of this option is on the target, or every effect of the group is a
+        // condition the target already bears (combat maneuvers like Trip carry no buff to match).
+        static bool AlreadyAffected(DebuffOption option, DebuffGroup group, UnitEntityData target, HashSet<string> targetBuffs) {
+            foreach (var guid in option.Profile.AppliedBuffGuids)
+                if (targetBuffs.Contains(guid)) return true;
+
+            bool any = false;
+            foreach (var e in option.Profile.Entries) {
+                if (e.Group != group) continue;
+                if (e.Kind != DebuffEntryKind.Condition || !target.State.HasCondition(e.Condition)) return false;
+                any = true;
+            }
+            return any;
         }
 
         // Condition immunity only blocks an option when EVERY group entry is a condition the target is immune to;
@@ -217,18 +214,22 @@ namespace WrathTactics.Engine {
             return tier;
         }
 
+        static readonly HashSet<string> s_durationFailed = new HashSet<string>();
+
         // Rounds an Incapacitated entry lasts: static value, else the blueprint duration evaluated for this
         // caster, else the named fallback.
         static float DurationRoundsOf(UnitEntityData owner, DebuffOption option, DebuffEntry e) {
             if (e.DurationRounds >= 0f) return e.DurationRounds;
             if (e.Duration == null) return DebuffMath.UnknownDurationRounds;
+            if (s_durationFailed.Contains(option.Key + "|" + e.BuffGuid)) return DebuffMath.UnknownDurationRounds;
             return DebuffMetricCache.GetOrCompute($"dur|{owner.UniqueId}|{option.Key}|{e.BuffGuid}", () => {
                 try {
                     var context = option.Ability.CreateExecutionContext(new TargetWrapper(owner));
                     return Math.Max(1, e.Duration.Calculate(context).Value);
                 } catch (Exception ex) {
-                    // Per-tick guard: a duration that cannot be evaluated must not abort the search.
-                    Log.Engine.Debug($"DebuffGroup: duration of '{option.Name}' unresolved ({ex.GetType().Name}), using {DebuffMath.UnknownDurationRounds} round(s)");
+                    // Per-tick guard: a duration that cannot be evaluated must not abort the search. Logged once
+                    // per option: the metric cache only lives for one tick.
+                    if (s_durationFailed.Add(option.Key + "|" + e.BuffGuid)) Log.Engine.Debug($"DebuffGroup: duration of '{option.Name}' unresolved ({ex.GetType().Name}), using {DebuffMath.UnknownDurationRounds} round(s)");
                     return DebuffMath.UnknownDurationRounds;
                 }
             });
@@ -270,20 +271,26 @@ namespace WrathTactics.Engine {
                 () => ConditionEvaluator.MeasureSpellResistMargin(owner, target, ability));
             if (!float.IsNaN(srm) && srm <= ConditionEvaluator.SpellResistMarginFails) {
                 rejected.Add($"{option.Name} (immune)");
-                Log.Engine.Trace($"DebuffGroup {group}: '{option.Name}' [{option.Kind}] rejected (immune)");
                 return false;
             }
             float pSr = float.IsNaN(srm) ? 1f : DebuffMath.PenetrationChance((int)srm);
 
             float dcms = DebuffMetricCache.GetOrCompute($"dc|{option.Key}|{target.UniqueId}|{owner.UniqueId}",
-                () => ConditionEvaluator.MeasureDCMinusSave(owner, target, ability));
-            // No computable save (NaN) means nothing to resist: the effect always lands.
+                () => ConditionEvaluator.MeasureDCMinusSave(owner, target, ability, option.Profile.Save));
+            // NaN only remains when neither the ability, its touch delivery nor the profile names a save: the
+            // effect has nothing to resist and always lands. Touch spells resolve their save through the
+            // deliver blueprint, so they no longer fall in here by accident.
             float pFail = float.IsNaN(dcms) ? 1f : DebuffMath.FailChance((int)dcms);
 
             int cl = CasterLevelOf(owner, option);
             int hits = c.Choice.Hits;
             float gated = Aggregate(owner, option, group, cl, stats, pFail, out float raw);
-            c.Choice.Ev = DebuffMath.ExpectedValue(gated, 1f, pSr, hits);
+            float ev = DebuffMath.ExpectedValue(gated, 1f, pSr, hits);
+            if (!DebuffMath.CanLand(ev)) {
+                rejected.Add($"{option.Name} (cannot-land)");
+                return false;
+            }
+            c.Choice.Ev = ev;
             c.Choice.Magnitude = raw;
             c.Choice.PFail = pFail;
             c.Choice.PSr = pSr;
