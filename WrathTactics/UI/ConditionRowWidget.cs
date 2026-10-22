@@ -165,6 +165,7 @@ namespace WrathTactics.UI {
                     || condition.Property == ConditionProperty.ABMinusAC
                     || condition.Property == ConditionProperty.EnemyHDMinusPartyLevel
                     || condition.Property == ConditionProperty.OptionEffect
+                    || condition.Property == ConditionProperty.OptionEnemiesInRadius
                     || condition.Property == ConditionProperty.WithinRange
                     || condition.Property == ConditionProperty.AdjacentEnemyCount
                     || condition.Property == ConditionProperty.EngagedEnemyCount;
@@ -703,7 +704,8 @@ namespace WrathTactics.UI {
                         ConditionProperty.SpellDCMinusSave,
                         ConditionProperty.SpellResistMargin,
                         ConditionProperty.OptionEffect,
-                        ConditionProperty.OptionSource
+                        ConditionProperty.OptionSource,
+                        ConditionProperty.OptionEnemiesInRadius
                     };
                 case ConditionSubject.Combat:
                     return new List<ConditionProperty> {

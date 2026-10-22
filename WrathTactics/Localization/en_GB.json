@@ -206,6 +206,7 @@
   "enum.property.SpellResistMargin": "Penetration − SR",
   "enum.property.OptionEffect": "Option effect",
   "enum.property.OptionSource": "Option source",
+  "enum.property.OptionEnemiesInRadius": "Enemies in radius",
   "enum.debuffsource.Spell": "Spell",
   "enum.debuffsource.ClassAbility": "Class ability",
   "enum.debuffsource.ItemAbility": "Item ability",

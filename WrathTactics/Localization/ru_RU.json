@@ -206,6 +206,7 @@
   "enum.property.SpellResistMargin": "Пробитие − СЗ",
   "enum.property.OptionEffect": "Эффект варианта",
   "enum.property.OptionSource": "Источник варианта",
+  "enum.property.OptionEnemiesInRadius": "Враги в радиусе",
   "enum.debuffsource.Spell": "Заклинание",
   "enum.debuffsource.ClassAbility": "Способность класса",
   "enum.debuffsource.ItemAbility": "Способность предмета",

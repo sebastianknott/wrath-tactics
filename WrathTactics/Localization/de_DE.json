@@ -206,6 +206,7 @@
   "enum.property.SpellResistMargin": "Durchdringung − ZR",
   "enum.property.OptionEffect": "Optionseffekt",
   "enum.property.OptionSource": "Optionsquelle",
+  "enum.property.OptionEnemiesInRadius": "Gegner im Radius",
   "enum.debuffsource.Spell": "Zauber",
   "enum.debuffsource.ClassAbility": "Klassenfähigkeit",
   "enum.debuffsource.ItemAbility": "Gegenstandsfähigkeit",
