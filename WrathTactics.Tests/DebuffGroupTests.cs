@@ -72,5 +72,27 @@ namespace WrathTactics.Tests {
         public void DebuffDefaults_leaves_other_actions_alone() {
             Assert.Equal(DebuffGroup.None, DebuffDefaults.GroupFor(ActionType.CastSpell, DebuffGroup.None));
         }
+    
+        [Theory]
+        [InlineData(SpellSourceMask.All)]
+        [InlineData(SpellSourceMask.Spell)]
+        [InlineData(SpellSourceMask.Scroll)]
+        [InlineData(SpellSourceMask.Spell | SpellSourceMask.Scroll)]
+        public void DebuffDefaults_keeps_a_source_mask_the_dropdown_offers(SpellSourceMask mask) {
+            Assert.Equal(mask, DebuffDefaults.SourcesFor(ActionType.CastDebuffGroup, mask));
+        }
+
+        [Theory]
+        [InlineData(SpellSourceMask.Potion)]
+        [InlineData(SpellSourceMask.None)]
+        [InlineData(SpellSourceMask.Potion | SpellSourceMask.Scroll)]
+        public void DebuffDefaults_normalizes_an_unoffered_source_mask_to_All(SpellSourceMask mask) {
+            Assert.Equal(SpellSourceMask.All, DebuffDefaults.SourcesFor(ActionType.CastDebuffGroup, mask));
+        }
+
+        [Fact]
+        public void DebuffDefaults_leaves_the_source_mask_of_other_actions_alone() {
+            Assert.Equal(SpellSourceMask.Potion, DebuffDefaults.SourcesFor(ActionType.CastSpell, SpellSourceMask.Potion));
+        }
     }
 }

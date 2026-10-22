@@ -9,5 +9,23 @@ namespace WrathTactics.Models {
             if (action != ActionType.CastDebuffGroup) return current;
             return current == DebuffGroup.None ? DebuffGroup.ArmorClass : current;
         }
+
+        /// <summary>
+        /// Source mask for a CastDebuffGroup rule. The editor offers All, Spell, Scroll and Spell+Scroll
+        /// (a potion never debuffs an enemy); a mask carried over from another action (Potion-only, None)
+        /// would show a wrong dropdown entry and enumerate nothing, so it falls back to All.
+        /// </summary>
+        public static SpellSourceMask SourcesFor(ActionType action, SpellSourceMask current) {
+            if (action != ActionType.CastDebuffGroup) return current;
+            switch (current) {
+                case SpellSourceMask.All:
+                case SpellSourceMask.Spell:
+                case SpellSourceMask.Scroll:
+                case SpellSourceMask.Spell | SpellSourceMask.Scroll:
+                    return current;
+                default:
+                    return SpellSourceMask.All;
+            }
+        }
     }
 }
