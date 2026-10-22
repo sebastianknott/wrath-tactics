@@ -24,6 +24,8 @@ namespace WrathTactics.Engine {
         public float Dcms;
         public float Srm;
         public float Effect;
+        /// <summary>Enemies the option hits when cast at the enemy under test (1 for single/chain).</summary>
+        public int Hits;
         public DebuffSourceKind Kind;
     }
 
@@ -81,6 +83,8 @@ namespace WrathTactics.Engine {
                     return !float.IsNaN(v.Srm) && ConditionEvaluator.CompareFloat(v.Srm, row.Operator, threshold);
                 case ConditionProperty.OptionEffect:
                     return ConditionEvaluator.CompareFloat(v.Effect, row.Operator, threshold);
+                case ConditionProperty.OptionEnemiesInRadius:
+                    return ConditionEvaluator.CompareFloat(v.Hits, row.Operator, threshold);
                 case ConditionProperty.OptionSource: {
                     bool same = string.Equals(v.Kind.ToString(), row.Value, StringComparison.OrdinalIgnoreCase);
                     return row.Operator == ConditionOperator.NotEqual ? !same : same;
