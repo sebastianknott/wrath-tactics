@@ -8,6 +8,8 @@ namespace WrathTactics.Tests {
         [Theory]
         [InlineData(ActionType.AttackTarget, TargetType.EnemyHighestThreat)]
         [InlineData(ActionType.ThrowSplash,  TargetType.EnemyHighestThreat)]
+        [InlineData(ActionType.CastDebuffGroup, TargetType.EnemyHighestThreat)]
+        [InlineData(ActionType.CastConditionOption, TargetType.ConditionTarget)]
         [InlineData(ActionType.MoveToTarget, TargetType.EnemyNearest)]
         [InlineData(ActionType.MoveAwayFromTarget, TargetType.EnemyNearest)]
         public void ForAction_replaces_Self_for_offensive_actions(ActionType action, TargetType expected) {

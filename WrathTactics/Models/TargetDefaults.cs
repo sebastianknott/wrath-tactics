@@ -16,6 +16,10 @@ namespace WrathTactics.Models {
                 case ActionType.MoveToTarget:
                 case ActionType.MoveAwayFromTarget:
                     return TargetType.EnemyNearest;
+                case ActionType.CastDebuffGroup:
+                    return TargetType.EnemyHighestThreat;
+                case ActionType.CastConditionOption:
+                    return TargetType.ConditionTarget;
                 default:
                     return null;
             }

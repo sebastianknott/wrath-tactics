@@ -83,7 +83,36 @@ namespace WrathTactics.Models {
         ThrowSplash,    // throw a splash weapon (Alchemist's Fire, Acid Flask, Holy Water)
         SwitchWeaponSet, // swap to a specific HandsEquipmentSet (engine allocates 4 slots, index 0-3)
         MoveToTarget,   // walk towards the target until within ActionDef.MoveWithin (UnitMoveTo, Move slot)
-        MoveAwayFromTarget // walk away from the target until beyond ActionDef.MoveWithin (UnitMoveTo, Move slot; FleeGeometry)
+        MoveAwayFromTarget, // walk away from the target until beyond ActionDef.MoveWithin (UnitMoveTo, Move slot; FleeGeometry)
+        CastDebuffGroup,    // 11: cast the strongest ally-safe debuff of ActionDef.DebuffGroup (WTW-30)
+        CastConditionOption // 12: cast the option bound by a GroupOption condition row (WTW-30 phase b)
+    }
+
+    /// <summary>
+    /// Effect group of a debuff (WTW-30). Newtonsoft serialises numeric indices: None MUST stay 0, append at the END only.
+    /// </summary>
+    public enum DebuffGroup {
+        None,
+        ArmorClass,
+        Attack,
+        Damage,
+        SaveWill,
+        SaveReflex,
+        SaveFortitude,
+        Dexterity,
+        Strength,
+        Constitution,
+        Speed,
+        Incapacitated
+    }
+
+    /// <summary>Where a debuff option comes from (WTW-30). Append only.</summary>
+    public enum DebuffSourceKind {
+        Spell,
+        ClassAbility,
+        ItemAbility,
+        Scroll,
+        ThrownItem
     }
 
     public enum HealMode {
