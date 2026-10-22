@@ -141,6 +141,7 @@ namespace WrathTactics.Engine {
                 rule.ConditionGroups = copy.ConditionGroups;
                 rule.Action = copy.Action;
                 rule.Target = copy.Target;
+                rule.Uninterruptible = copy.Uninterruptible;
             }
             rule.PresetId = null;
         }
