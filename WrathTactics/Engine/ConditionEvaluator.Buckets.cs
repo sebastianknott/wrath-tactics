@@ -8,7 +8,7 @@ namespace WrathTactics.Engine {
     public static partial class ConditionEvaluator {
         static bool EvaluateEnemyBucket(List<Condition> conds, UnitEntityData owner) {
             var enemies = GetVisibleEnemies(owner).ToList();
-            var nonCountConds = conds.Where(c => c.Subject != ConditionSubject.EnemyCount).ToList();
+            var nonCountConds = BundleOptionRows(conds.Where(c => c.Subject != ConditionSubject.EnemyCount).ToList());
             var countConds    = conds.Where(c => c.Subject == ConditionSubject.EnemyCount).ToList();
 
             // Count-only groups stay evaluable with zero visible enemies so
@@ -27,6 +27,8 @@ namespace WrathTactics.Engine {
                     ? enemies.OrderByDescending(metric)
                     : enemies.OrderBy(metric);
             }
+
+            ordered = RotateToOptionCursor(ordered, nonCountConds);
 
             // Pick-or-Enemy path: find first enemy that passes every non-Count condition.
             UnitEntityData matchedEnemy = null;

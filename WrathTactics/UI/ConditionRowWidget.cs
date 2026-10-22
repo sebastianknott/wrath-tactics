@@ -68,6 +68,8 @@ namespace WrathTactics.UI {
             var subjectNames = EnumLabels.NamesFor<ConditionSubject>();
             PopupSelector.CreateInRow(root, "Subject", 0.15f, subjectNames,
                 (int)condition.Subject, v => {
+                    // Value2 of a GroupOption row is a group name, meaningless to any other subject.
+                    if (condition.Subject == ConditionSubject.GroupOption) condition.Value2 = "";
                     var oldProperty = condition.Property;
                     condition.Subject = (ConditionSubject)v;
                     // Reset property to first valid for new subject
@@ -97,9 +99,10 @@ namespace WrathTactics.UI {
             bool isCountSubject = condition.Subject == ConditionSubject.AllyCount
                 || condition.Subject == ConditionSubject.EnemyCount;
             bool isAllyByNameSubject = condition.Subject == ConditionSubject.AllyByName;
+            bool isGroupOptionSubject = condition.Subject == ConditionSubject.GroupOption;
             bool isHasCondition = condition.Property == ConditionProperty.HasCondition;
 
-            if (isCountSubject || isAllyByNameSubject) {
+            if (isCountSubject || isAllyByNameSubject || isGroupOptionSubject) {
                 // Compressed layout shared with count subjects:
                 // [Subject 0→0.15] [LeftWidget 0.16→0.30] ["with" 0.31→0.37]
                 //   [Property 0.38→0.58] [Op/Value 0.58→0.88] [X 0.9→1.0]
@@ -121,6 +124,17 @@ namespace WrathTactics.UI {
                         condition.Value2 = v;
                         onChanged?.Invoke();
                     });
+                } else if (isGroupOptionSubject) {
+                    // GroupOption: effect group the option rows bind to. Stored in Value2 as the DebuffGroup name;
+                    // the rows of one condition group must share it (the evaluator ignores rows naming another).
+                    var groups = GroupOptionGroups;
+                    int gIdx = groups.FindIndex(g => g.ToString() == condition.Value2);
+                    if (gIdx < 0) { gIdx = 0; condition.Value2 = groups[0].ToString(); }
+                    PopupSelector.CreateInRow(root, "GroupOptionGroup", 0.14f,
+                        groups.Select(g => EnumLabels.For(g)).ToList(), gIdx, v => {
+                            condition.Value2 = groups[v].ToString();
+                            onChanged?.Invoke();
+                        });
                 } else {
                     // AllyByName: ally picker (live PartyAndPets). Stored in Value2 as UniqueId.
                     CreateAllyPicker(root, 0.14f, "AllyByNamePicker",
@@ -150,6 +164,7 @@ namespace WrathTactics.UI {
                     || condition.Property == ConditionProperty.SpellResistMargin
                     || condition.Property == ConditionProperty.ABMinusAC
                     || condition.Property == ConditionProperty.EnemyHDMinusPartyLevel
+                    || condition.Property == ConditionProperty.OptionEffect
                     || condition.Property == ConditionProperty.WithinRange
                     || condition.Property == ConditionProperty.AdjacentEnemyCount
                     || condition.Property == ConditionProperty.EngagedEnemyCount;
@@ -189,6 +204,7 @@ namespace WrathTactics.UI {
                     || condition.Property == ConditionProperty.HasCondition
                     || condition.Property == ConditionProperty.HasDescriptorEffect
                     || condition.Property == ConditionProperty.ImmuneToEnergy
+                    || condition.Property == ConditionProperty.OptionSource
                     || condition.Property == ConditionProperty.HasClass) {
                     CreateEqOperator(root, 0.06f, "CountEqOp");
 
@@ -264,7 +280,8 @@ namespace WrathTactics.UI {
                 bool isHasClass = condition.Property == ConditionProperty.HasClass;
                 bool isWithinRange = condition.Property == ConditionProperty.WithinRange;
                 bool isDescOrEnergy = condition.Property == ConditionProperty.HasDescriptorEffect
-                    || condition.Property == ConditionProperty.ImmuneToEnergy;
+                    || condition.Property == ConditionProperty.ImmuneToEnergy
+                    || condition.Property == ConditionProperty.OptionSource;
                 bool usesEqOp = isHasCondition || isCreatureType || isBuffProp || isAlignment || isHasClass || isDescOrEnergy;
                 bool isBoolProperty = condition.Property == ConditionProperty.IsDead
                     || condition.Property == ConditionProperty.IsInCombat
@@ -441,6 +458,10 @@ namespace WrathTactics.UI {
                 condition.Value2 = "";
         }
 
+        // Effect groups a GroupOption row can bind to (None is "no group" and not offered).
+        static readonly List<DebuffGroup> GroupOptionGroups =
+            Enum.GetValues(typeof(DebuffGroup)).Cast<DebuffGroup>().Where(g => g != DebuffGroup.None).ToList();
+
         void CreateEqOperator(GameObject root, float flexibleWidth, string name) {
             var eqOpNames = new List<string> { "=", "!=" };
             int eqOpIdx = condition.Operator == ConditionOperator.NotEqual ? 1 : 0;
@@ -458,6 +479,7 @@ namespace WrathTactics.UI {
                 case ConditionProperty.HasCondition: return EnumLabels.KeysForCondition();
                 case ConditionProperty.HasDescriptorEffect: return EnumLabels.KeysForDescriptorEffect();
                 case ConditionProperty.ImmuneToEnergy:      return EnumLabels.KeysForEnergy();
+                case ConditionProperty.OptionSource:        return EnumLabels.KeysForDebuffSource();
                 case ConditionProperty.WithinRange:  return RangeBracketNames;
                 default:                             return new List<string>();
             }
@@ -485,6 +507,7 @@ namespace WrathTactics.UI {
                 case ConditionProperty.HasCondition: return EnumLabels.LabelsForCondition();
                 case ConditionProperty.HasDescriptorEffect: return EnumLabels.LabelsForDescriptorEffect();
                 case ConditionProperty.ImmuneToEnergy:      return EnumLabels.LabelsForEnergy();
+                case ConditionProperty.OptionSource:        return EnumLabels.LabelsForDebuffSource();
                 // WithinRange deliberately absent: bracket labels are operator-
                 // dependent — use GetRangeBracketLabels(condition.Operator).
                 default: return new List<string>();
@@ -674,6 +697,13 @@ namespace WrathTactics.UI {
                         ConditionProperty.WieldsRangedWeapon,
                         ConditionProperty.IsFlanked,
                         ConditionProperty.AdjacentEnemyCount
+                    };
+                case ConditionSubject.GroupOption:
+                    return new List<ConditionProperty> {
+                        ConditionProperty.SpellDCMinusSave,
+                        ConditionProperty.SpellResistMargin,
+                        ConditionProperty.OptionEffect,
+                        ConditionProperty.OptionSource
                     };
                 case ConditionSubject.Combat:
                     return new List<ConditionProperty> {

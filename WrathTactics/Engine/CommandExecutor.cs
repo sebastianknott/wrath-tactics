@@ -24,6 +24,8 @@ namespace WrathTactics.Engine {
                         return ExecuteCastSpell(action, owner, target, out issuedCommand);
                     case ActionType.CastDebuffGroup:
                         return ExecuteDebuffGroup(action, owner, target, out issuedCommand);
+                    case ActionType.CastConditionOption:
+                        return ExecuteConditionOption(action, owner, target, out issuedCommand);
                     case ActionType.UseItem:
                         return ExecuteUseItem(action.AbilityId, owner, target, out issuedCommand);
                     case ActionType.ToggleActivatable:
@@ -148,6 +150,23 @@ namespace WrathTactics.Engine {
             }
             var option = choice.Value.Option;
             Log.Engine.Info($"DebuffGroup {action.DebuffGroup}: {owner.CharacterName} casts '{option.Name}' [{option.Kind}] on {unit.CharacterName} (EV {choice.Value.Ev:F2})");
+            return IssueAbility(action, owner, option.Ability, option.InventorySource, target, out issuedCommand);
+        }
+
+        // CastConditionOption: casts the option latched by the GroupOption condition rows. The validator handed it
+        // over through DebuffSelection; a miss falls back to the condition latch once, never to a fresh search.
+        static bool ExecuteConditionOption(ActionDef action, UnitEntityData owner, ResolvedTarget target, out UnitCommand issuedCommand) {
+            issuedCommand = null;
+            var unit = target.Unit;
+            if (unit == null) return false;
+            var choice = DebuffSelection.Take(owner, unit);
+            if (choice == null) {
+                Log.Engine.Warn($"CastConditionOption: no latched option for {owner.CharacterName} -> {unit.CharacterName}, reading the condition latch");
+                if (!ActionValidator.CanExecuteConditionOption(owner, unit, out var latched)) return false;
+                choice = latched;
+            }
+            var option = choice.Value.Option;
+            Log.Engine.Info($"CastConditionOption: {owner.CharacterName} casts '{option.Name}' [{option.Kind}] on {unit.CharacterName} (EV {choice.Value.Ev:F2})");
             return IssueAbility(action, owner, option.Ability, option.InventorySource, target, out issuedCommand);
         }
 

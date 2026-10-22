@@ -48,6 +48,7 @@ namespace WrathTactics.Engine {
             LastMatchedAlly = null;
             LastMatchedSelf = null;
             DebuffSelection.Clear();
+            ClearOptionLatch();
         }
 
         public static bool Evaluate(TacticsRule rule, UnitEntityData owner) {
@@ -56,6 +57,7 @@ namespace WrathTactics.Engine {
 
             CurrentAction = rule.Action;
             CurrentOwner = owner;
+            BeginOptionPass();
             try {
                 foreach (var group in rule.ConditionGroups) {
                     if (EvaluateGroup(group, owner))
@@ -63,6 +65,7 @@ namespace WrathTactics.Engine {
                 }
                 return false;
             } finally {
+                EndOptionPass();
                 CurrentAction = null;
                 CurrentOwner = null;
                 CurrentPartyBestAB = float.NaN;
@@ -268,6 +271,7 @@ namespace WrathTactics.Engine {
                 case ConditionSubject.EnemyHighestHD:
                 case ConditionSubject.EnemyLowestHD:
                 case ConditionSubject.EnemyNearest:
+                case ConditionSubject.GroupOption:
                     return true;
                 default:
                     return false;
