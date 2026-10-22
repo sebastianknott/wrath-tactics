@@ -1,0 +1,60 @@
+using WrathTactics.Models;
+using Xunit;
+
+namespace WrathTactics.Tests {
+    // Enums persist as numeric indices in preset/config JSON: pin every member.
+    public class DebuffGroupTests {
+        [Fact]
+        public void ActionType_debuff_members_are_appended_after_the_existing_ones() {
+            Assert.Equal(11, (int)ActionType.CastDebuffGroup);
+            Assert.Equal(12, (int)ActionType.CastConditionOption);
+        }
+
+        [Theory]
+        [InlineData(DebuffGroup.None, 0)]
+        [InlineData(DebuffGroup.ArmorClass, 1)]
+        [InlineData(DebuffGroup.Attack, 2)]
+        [InlineData(DebuffGroup.Damage, 3)]
+        [InlineData(DebuffGroup.SaveWill, 4)]
+        [InlineData(DebuffGroup.SaveReflex, 5)]
+        [InlineData(DebuffGroup.SaveFortitude, 6)]
+        [InlineData(DebuffGroup.Dexterity, 7)]
+        [InlineData(DebuffGroup.Strength, 8)]
+        [InlineData(DebuffGroup.Constitution, 9)]
+        [InlineData(DebuffGroup.Speed, 10)]
+        [InlineData(DebuffGroup.Incapacitated, 11)]
+        public void DebuffGroup_indices_are_stable(DebuffGroup g, int index) {
+            Assert.Equal(index, (int)g);
+        }
+
+        [Theory]
+        [InlineData(DebuffSourceKind.Spell, 0)]
+        [InlineData(DebuffSourceKind.ClassAbility, 1)]
+        [InlineData(DebuffSourceKind.ItemAbility, 2)]
+        [InlineData(DebuffSourceKind.Scroll, 3)]
+        [InlineData(DebuffSourceKind.ThrownItem, 4)]
+        public void DebuffSourceKind_indices_are_stable(DebuffSourceKind k, int index) {
+            Assert.Equal(index, (int)k);
+        }
+
+        [Fact]
+        public void ActionDef_starts_without_a_group() {
+            Assert.Equal(DebuffGroup.None, new ActionDef().DebuffGroup);
+        }
+
+        [Fact]
+        public void DebuffDefaults_picks_armor_class_for_the_debuff_action() {
+            Assert.Equal(DebuffGroup.ArmorClass, DebuffDefaults.GroupFor(ActionType.CastDebuffGroup, DebuffGroup.None));
+        }
+
+        [Fact]
+        public void DebuffDefaults_keeps_an_explicit_choice() {
+            Assert.Equal(DebuffGroup.Speed, DebuffDefaults.GroupFor(ActionType.CastDebuffGroup, DebuffGroup.Speed));
+        }
+
+        [Fact]
+        public void DebuffDefaults_leaves_other_actions_alone() {
+            Assert.Equal(DebuffGroup.None, DebuffDefaults.GroupFor(ActionType.CastSpell, DebuffGroup.None));
+        }
+    }
+}
