@@ -89,7 +89,11 @@ namespace WrathTactics.Engine {
         }
 
         // Measurement for an explicit ability; CurrentOwner is the caster (set by the wrapper or by MeasureDCMinusSave).
-        static float ComputeDCMinusSaveCore(UnitEntityData target, AbilityData ability) {
+        // fallbackSave: save type the caller already knows (debuff profile), used when the ability's own
+        // RunAction names none. Touch spells (Bestow Curse, Touch of Idiocy) carry the RunAction on the touch
+        // delivery blueprint, not on the spell itself, so the deliver blueprint is read first (as SR does).
+        static float ComputeDCMinusSaveCore(UnitEntityData target, AbilityData ability,
+                                            Kingmaker.EntitySystem.Stats.SavingThrowType fallbackSave = Kingmaker.EntitySystem.Stats.SavingThrowType.Unknown) {
             Kingmaker.EntitySystem.Stats.SavingThrowType saveType;
             string saveTypeSource;
             if (ability.MagicHackData != null) {
@@ -101,6 +105,21 @@ namespace WrathTactics.Engine {
                 saveType = runAction?.SavingThrowType
                     ?? Kingmaker.EntitySystem.Stats.SavingThrowType.Unknown;
                 saveTypeSource = runAction != null ? "RunAction" : "no-RunAction-component";
+                if (saveType == Kingmaker.EntitySystem.Stats.SavingThrowType.Unknown) {
+                    var deliver = ability.GetDeliverBlueprint(false);
+                    var deliverRun = deliver != null && deliver != ability.Blueprint
+                        ? deliver.GetComponent<Kingmaker.UnitLogic.Abilities.Components.AbilityEffectRunAction>()
+                        : null;
+                    if (deliverRun != null && deliverRun.SavingThrowType != Kingmaker.EntitySystem.Stats.SavingThrowType.Unknown) {
+                        saveType = deliverRun.SavingThrowType;
+                        saveTypeSource = "DeliverRunAction";
+                    }
+                }
+                if (saveType == Kingmaker.EntitySystem.Stats.SavingThrowType.Unknown
+                    && fallbackSave != Kingmaker.EntitySystem.Stats.SavingThrowType.Unknown) {
+                    saveType = fallbackSave;
+                    saveTypeSource = "profile";
+                }
             }
 
             if (saveType == Kingmaker.EntitySystem.Stats.SavingThrowType.Unknown) {

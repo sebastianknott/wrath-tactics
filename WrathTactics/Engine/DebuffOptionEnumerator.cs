@@ -64,9 +64,20 @@ namespace WrathTactics.Engine {
             return profile.IsDebuff && profile.AllySafe && profile.HasGroup(group) ? profile : null;
         }
 
+        // Cheap blueprint-level pre-check for inventory items, before an AbilityData is built per stack and per tick:
+        // a variant container stands for its variants (classified after Expand), anything else is classified now.
+        static bool MayBeRelevant(BlueprintAbility ability, DebuffGroup group) {
+            if (ability.GetComponent<AbilityVariants>() != null) return true;
+            var profile = DebuffClassifier.Get(ability);
+            return profile.IsDebuff && profile.AllySafe && profile.HasGroup(group);
+        }
+
         static string KeyOf(AbilityData data, DebuffSourceKind kind, ItemEntity item) {
             int meta = data.MetamagicData != null ? (int)data.MetamagicData.MetamagicMask : 0;
-            return data.Blueprint.AssetGuid + "|" + meta + "|" + (int)kind + "|" + (item?.UniqueId ?? "");
+            // The same spell sits in several spellbooks and at several levels with separate slot pools.
+            string book = data.Spellbook?.Blueprint?.AssetGuid.ToString() ?? "";
+            return data.Blueprint.AssetGuid + "|" + meta + "|" + (int)kind + "|" + (item?.UniqueId ?? "")
+                + "|" + book + "|" + data.SpellLevelInSpellbook;
         }
 
         static void Add(List<DebuffOption> into, AbilityData data, DebuffProfile profile, DebuffSourceKind kind,
@@ -135,10 +146,14 @@ namespace WrathTactics.Engine {
         }
 
         static bool HasResource(UnitEntityData owner, AbilityData data) {
+            // Mirrors the class-ability path of FindCastSpellSource: only a spending component counts, and the
+            // ability may override the resource it draws from.
             var resource = data.Blueprint.GetComponent<AbilityResourceLogic>();
-            if (resource?.RequiredResource == null) return true;
+            if (resource == null || !resource.IsSpendResource) return true;
+            var required = (BlueprintScriptableObject)data.OverrideRequiredResource ?? resource.RequiredResource;
+            if (required == null) return true;
             // Engine-authoritative cost, honours cost-modifying facts (same as FindBestHealEx).
-            return owner.Resources.GetResourceAmount(resource.RequiredResource) >= resource.CalculateCost(data);
+            return owner.Resources.GetResourceAmount(required) >= resource.CalculateCost(data);
         }
 
         // Scrolls (UMD-gated) and thrown items (usables that are neither potion, scroll nor wand).
@@ -150,6 +165,7 @@ namespace WrathTactics.Engine {
                 if (item == null || item.Count <= 0) continue;
                 var usable = item.Blueprint as BlueprintItemEquipmentUsable;
                 if (usable?.Ability == null) continue;
+                if (!MayBeRelevant(usable.Ability, group)) continue;
                 bool isScroll = usable.Type == UsableItemType.Scroll;
                 bool thrown = usable.Type == UsableItemType.Other || usable.Type == UsableItemType.Utility;
                 if (!isScroll && !thrown) continue;
