@@ -10,11 +10,12 @@ namespace WrathTactics.Engine {
         // rule's own [Then] ability off CurrentAction; the debuff-group search measures abilities the rule does not
         // name, so it hands the ability in. CurrentOwner is the caster for the duration of the call (the probe and
         // the penetration lookup read it) and is restored afterwards: the search can run inside a rule evaluation.
-        internal static float MeasureDCMinusSave(UnitEntityData caster, UnitEntityData target, AbilityData ability) {
+        internal static float MeasureDCMinusSave(UnitEntityData caster, UnitEntityData target, AbilityData ability,
+                                               Kingmaker.EntitySystem.Stats.SavingThrowType fallbackSave = Kingmaker.EntitySystem.Stats.SavingThrowType.Unknown) {
             var previous = CurrentOwner;
             CurrentOwner = caster;
             try {
-                return ComputeDCMinusSaveCore(target, ability);
+                return ComputeDCMinusSaveCore(target, ability, fallbackSave);
             } finally {
                 CurrentOwner = previous;
             }

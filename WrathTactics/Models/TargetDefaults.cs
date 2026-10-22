@@ -26,6 +26,34 @@ namespace WrathTactics.Models {
         }
 
         /// <summary>
+        /// Target after the CastDebuffGroup editor switches the action to Heal: an enemy selector (the debuff
+        /// default or any other) would heal the enemy, so it falls back to Self. Ally and condition targets stay.
+        /// </summary>
+        public static TargetType? ForHealFromDebuff(TargetType current) {
+            switch (current) {
+                case TargetType.EnemyNearest:
+                case TargetType.EnemyLowestHp:
+                case TargetType.EnemyHighestHp:
+                case TargetType.EnemyHighestAC:
+                case TargetType.EnemyLowestAC:
+                case TargetType.EnemyHighestFort:
+                case TargetType.EnemyLowestFort:
+                case TargetType.EnemyHighestReflex:
+                case TargetType.EnemyLowestReflex:
+                case TargetType.EnemyHighestWill:
+                case TargetType.EnemyLowestWill:
+                case TargetType.EnemyHighestThreat:
+                case TargetType.EnemyCreatureType:
+                case TargetType.EnemyHighestHD:
+                case TargetType.EnemyLowestHD:
+                case TargetType.EnemyMostEnemyNeighbors:
+                    return TargetType.Self;
+                default:
+                    return null;
+            }
+        }
+
+        /// <summary>
         /// Bracket for the move actions. ActionDef.MoveWithin starts on Melee (enum index 0),
         /// which is right for "walk up to" but useless for "get away" — 2 m is still in
         /// reach. Only ever replaces the index-0 value; an explicit choice is kept.
