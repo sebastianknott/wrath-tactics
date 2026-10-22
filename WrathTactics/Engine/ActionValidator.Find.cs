@@ -189,7 +189,7 @@ namespace WrathTactics.Engine {
         // `GetAvailableForCastSpellCount` return 0 for any spellbook-spell variant, blocking
         // the cast at the validator's slot-count gate. Class-ability variants are unaffected
         // because their Spellbook==null branch skips the gate.
-        static AbilityData MakeVariantData(AbilityData parent, BlueprintAbility variant) {
+        internal static AbilityData MakeVariantData(AbilityData parent, BlueprintAbility variant) {
             var data = new AbilityData(parent, variant);
             data.SpellLevelInSpellbook = parent.SpellLevelInSpellbook;
             return data;

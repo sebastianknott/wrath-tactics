@@ -21,7 +21,8 @@ namespace WrathTactics.Models {
         EnemyHighestHD,      // the single enemy with highest HD
         EnemyLowestHD,       // the single enemy with lowest HD
         AllyByName,          // a specific ally pinned by UniqueId stored in Condition.Value2
-        EnemyNearest         // the single enemy closest to the rule owner
+        EnemyNearest,        // the single enemy closest to the rule owner
+        GroupOption          // 22: a debuff option of the effect group named in Value2 (WTW-30); rows bind to ONE option
     }
 
     public enum ConditionProperty {
@@ -65,7 +66,10 @@ namespace WrathTactics.Models {
         HasEnergyResistance,      // Value = DamageEnergyType name (Fire/Cold/Electricity/Acid/Sonic) — UnitPartDamageReduction.AllSources AddDamageResistanceEnergy, max GetCurrentValue > 0; =/!=
         IsDowned,                 // Yes/No — felled in combat but not finally dead (LifeState==Dead && !IsFinallyDead; red portrait, auto-revives after combat); Unconscious/Death's Door not counted. IsDead stays IsFinallyDead.
         SpellResistMargin,         // numeric — caster level + penetration bonuses − target spell resistance for the rule's own [Then] spell; Enemy-scope; +99 = no SR check / no SR, −99 = immune
-        IsVisible                 // Yes/No — unit.IsVisibleForPlayer (not in fog of war, view visible, in game): false for invisible/hidden enemies the party cannot see; Enemy-scope + EnemyCount
+        IsVisible,                // Yes/No — unit.IsVisibleForPlayer (not in fog of war, view visible, in game): false for invisible/hidden enemies the party cannot see; Enemy-scope + EnemyCount
+        OptionEffect,             // numeric — magnitude of the GroupOption's effect (stat penalty points, or expected lock rounds for Incapacitated); GroupOption only
+        OptionSource,             // value-list — DebuffSourceKind name of the GroupOption (Spell/ClassAbility/…); =/!=; GroupOption only
+        OptionEnemiesInRadius     // numeric — enemies the GroupOption's option hits when cast at the enemy (area radius count, 1 for single/chain); GroupOption only
     }
 
     public enum ConditionOperator {
@@ -88,7 +92,36 @@ namespace WrathTactics.Models {
         ThrowSplash,    // throw a splash weapon (Alchemist's Fire, Acid Flask, Holy Water)
         SwitchWeaponSet, // swap to a specific HandsEquipmentSet (engine allocates 4 slots, index 0-3)
         MoveToTarget,   // walk towards the target until within ActionDef.MoveWithin (UnitMoveTo, Move slot)
-        MoveAwayFromTarget // walk away from the target until beyond ActionDef.MoveWithin (UnitMoveTo, Move slot; FleeGeometry)
+        MoveAwayFromTarget, // walk away from the target until beyond ActionDef.MoveWithin (UnitMoveTo, Move slot; FleeGeometry)
+        CastDebuffGroup,    // 11: cast the strongest ally-safe debuff of ActionDef.DebuffGroup (WTW-30)
+        CastConditionOption // 12: cast the option bound by a GroupOption condition row (WTW-30 phase b)
+    }
+
+    /// <summary>
+    /// Effect group of a debuff (WTW-30). Newtonsoft serialises numeric indices: None MUST stay 0, append at the END only.
+    /// </summary>
+    public enum DebuffGroup {
+        None,
+        ArmorClass,
+        Attack,
+        Damage,
+        SaveWill,
+        SaveReflex,
+        SaveFortitude,
+        Dexterity,
+        Strength,
+        Constitution,
+        Speed,
+        Incapacitated
+    }
+
+    /// <summary>Where a debuff option comes from (WTW-30). Append only.</summary>
+    public enum DebuffSourceKind {
+        Spell,
+        ClassAbility,
+        ItemAbility,
+        Scroll,
+        ThrownItem
     }
 
     public enum HealMode {
