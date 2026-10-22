@@ -57,6 +57,13 @@ namespace WrathTactics.Localization {
             "Fire", "Cold", "Electricity", "Acid", "Sonic",
         };
 
+        // DebuffSourceKind names for OptionSource — storage keys match the enum exactly (WTW-30).
+        public static List<string> KeysForDebuffSource() => new List<string> {
+            "Spell", "ClassAbility", "ItemAbility", "Scroll", "ThrownItem",
+        };
+
+        public static List<string> LabelsForDebuffSource() => Map(KeysForDebuffSource(), k => $"enum.debuffsource.{k}".i18n());
+
         public static List<string> LabelsForCreatureType() => Map(KeysForCreatureType(), k => $"enum.creature_type.{k}".i18n());
         public static List<string> LabelsForAlignment() => Map(KeysForAlignment(), k => $"enum.alignment.{k}".i18n());
         public static List<string> LabelsForCondition() => Map(KeysForCondition(), k => $"enum.condition.{k}".i18n());

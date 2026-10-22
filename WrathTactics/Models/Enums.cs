@@ -21,7 +21,8 @@ namespace WrathTactics.Models {
         EnemyHighestHD,      // the single enemy with highest HD
         EnemyLowestHD,       // the single enemy with lowest HD
         AllyByName,          // a specific ally pinned by UniqueId stored in Condition.Value2
-        EnemyNearest         // the single enemy closest to the rule owner
+        EnemyNearest,        // the single enemy closest to the rule owner
+        GroupOption          // 22: a debuff option of the effect group named in Value2 (WTW-30); rows bind to ONE option
     }
 
     public enum ConditionProperty {
@@ -63,7 +64,9 @@ namespace WrathTactics.Models {
         EngagedEnemyCount,        // numeric — distinct living enemies in UnitCombatState.EngagedUnits ∪ EngagedBy (engine melee engagement: edge-to-edge reach + LOS, so large creatures count); see ConditionEvaluator.CountEngagedEnemies
         HasEnergyResistance,      // Value = DamageEnergyType name (Fire/Cold/Electricity/Acid/Sonic) — UnitPartDamageReduction.AllSources AddDamageResistanceEnergy, max GetCurrentValue > 0; =/!=
         IsBeingCastOnByAlly,      // Ally/Enemy-scope, =/!= : a non-owner ally is currently casting (Standard slot or queue) a UnitUseAbility at this unit; Value = ability GUID filter (empty = any; variant parent/ConvertedFrom also matches), Value2 = optional ally pin; melee attacks never count
-        SpellResistMargin         // numeric — caster level + penetration bonuses − target spell resistance for the rule's own [Then] spell; Enemy-scope; +99 = no SR check / no SR, −99 = immune
+        SpellResistMargin,        // numeric — caster level + penetration bonuses − target spell resistance for the rule's own [Then] spell; Enemy-scope; +99 = no SR check / no SR, −99 = immune
+        OptionEffect,             // numeric — magnitude of the GroupOption's effect (stat penalty points, or expected lock rounds for Incapacitated); GroupOption only
+        OptionSource              // value-list — DebuffSourceKind name of the GroupOption (Spell/ClassAbility/…); =/!=; GroupOption only
     }
 
     public enum ConditionOperator {
