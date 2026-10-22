@@ -14,6 +14,7 @@ namespace WrathTactics.Localization {
         public static string For(ThrowSplashMode v) => $"enum.splash_mode.{v}".i18n();
         public static string For(RangeBracket v) => $"enum.range.{v}".i18n();
         public static string For(HealEnergyType v) => $"enum.heal_energy.{v}".i18n();
+        public static string For(DebuffGroup v) => $"enum.debuffgroup.{v}".i18n();
 
         public static List<string> NamesFor<T>() where T : Enum {
             var values = (T[])Enum.GetValues(typeof(T));

@@ -18,6 +18,8 @@ namespace WrathTactics.Engine {
                 case ActionType.CastAbility:
                 case ActionType.UseItem:
                 case ActionType.Heal:
+                case ActionType.CastDebuffGroup:
+                case ActionType.CastConditionOption:
                     // RuntimeActionType already folds in Quicken (Swift -> Standard once the
                     // swift action is spent) and MythicAbilitiesAsMoveAction (Standard -> Move).
                     // An unresolvable slot degrades to Standard so a classification miss
@@ -80,6 +82,8 @@ namespace WrathTactics.Engine {
                 case ActionType.CastAbility:
                 case ActionType.UseItem:
                 case ActionType.Heal:
+                case ActionType.CastDebuffGroup:
+                case ActionType.CastConditionOption:
                 case ActionType.AttackTarget:
                     return true;
                 default:
