@@ -18,12 +18,12 @@ namespace WrathTactics.Tests {
         // Pinned per branch: patched appends other ConditionProperty members first (local-fixups.sh rewrites these).
         [Fact]
         public void OptionEffect_property_index_is_stable() {
-            Assert.Equal(36, (int)ConditionProperty.OptionEffect);
+            Assert.Equal(41, (int)ConditionProperty.OptionEffect);
         }
 
         [Fact]
         public void OptionSource_property_index_is_stable() {
-            Assert.Equal(37, (int)ConditionProperty.OptionSource);
+            Assert.Equal(42, (int)ConditionProperty.OptionSource);
         }
 
         [Theory]
