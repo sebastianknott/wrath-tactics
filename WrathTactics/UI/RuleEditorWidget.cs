@@ -135,15 +135,22 @@ namespace WrathTactics.UI {
 
                     var (rowObj, _) = UIHelpers.Create($"CondRow_G{gi}_C{ci}", bodyContainer.transform);
                     var widget = rowObj.AddComponent<ConditionRowWidget>();
+                    // The first GroupOption row of the group owns the effect-group picker; later ones follow it.
+                    Condition groupSource = null;
+                    if (condition.Subject == ConditionSubject.GroupOption) {
+                        var first = group.Conditions.First(c => c.Subject == ConditionSubject.GroupOption);
+                        if (!ReferenceEquals(first, condition)) groupSource = first;
+                    }
                     widget.Init(condition,
                         () => { PersistEdit(); onChanged?.Invoke(); },
                         () => {
                             group.Conditions.RemoveAt(capturedCi);
+                            ConditionRowWidget.EnsureGroupOnFirstOptionRow(group);
                             if (group.Conditions.Count == 0)
                                 rule.ConditionGroups.RemoveAt(capturedGi);
                             PersistEdit();
                             RebuildBody();
-                        });
+                        }, groupSource);
                 }
 
                 // "+ Condition" for this group; the last group also carries "+ OR" on the same row.
