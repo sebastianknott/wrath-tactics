@@ -100,19 +100,20 @@ namespace WrathTactics.Engine {
         /// Every usable option of the group against this target with its measured numbers, best first (same order
         /// as FindBestDebuff's pick). Unlike FindBestDebuff nothing is pruned: a GroupOption condition row may
         /// accept an option the plain ranking would have skipped. Options rejected by the cheap checks or found
-        /// immune are absent. Used by the condition bundle (WTW-30 phase b).
+        /// immune are absent. Used by the condition bundle (WTW-30 phase b); the caller enumerates the options and
+        /// the enemy positions once per evaluation and hands them in.
         /// </summary>
         internal static List<DebuffChoice> RankDebuffOptions(UnitEntityData owner, UnitEntityData target,
-                                                             DebuffGroup group, SpellSourceMask mask) {
+                                                             DebuffGroup group, List<DebuffOption> options,
+                                                             List<Vector3> enemyPositions) {
             var result = new List<DebuffChoice>();
             if (group == DebuffGroup.None || target == null) return result;
 
             var stats = ReadTargetStats(target);
             var rejected = new List<string>();
-            var enemyPositions = EnemyPositions(owner);
             var targetBuffs = TargetBuffGuids(target);
             var scored = new List<Scored>();
-            foreach (var option in DebuffOptionEnumerator.Enumerate(owner, group, mask)) {
+            foreach (var option in options) {
                 string reason = RejectReason(option, group, target, targetBuffs);
                 if (reason != null) {
                     Log.Engine.Trace($"DebuffGroup {group}: '{option.Name}' [{option.Kind}] rejected ({reason})");
@@ -134,7 +135,7 @@ namespace WrathTactics.Engine {
             return result;
         }
 
-        static List<Vector3> EnemyPositions(UnitEntityData owner) {
+        internal static List<Vector3> EnemyPositions(UnitEntityData owner) {
             return TargetResolver.VisibleEnemies(owner).Select(e => e.Position).ToList();
         }
 

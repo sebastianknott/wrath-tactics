@@ -28,7 +28,9 @@ namespace WrathTactics.Engine {
                     : enemies.OrderBy(metric);
             }
 
-            ordered = RotateToOptionCursor(ordered, nonCountConds);
+            // A Pick subject fixes the visiting order (nearest, highest threat, ...); rotating it would break that
+            // contract, so a capped pass under a Pick resumes from the Pick order again (documented limitation).
+            if (pickCond == null) ordered = RotateToOptionCursor(ordered, nonCountConds);
 
             // Pick-or-Enemy path: find first enemy that passes every non-Count condition.
             UnitEntityData matchedEnemy = null;
@@ -53,6 +55,8 @@ namespace WrathTactics.Engine {
 
                 int count = 0;
                 UnitEntityData firstCounted = null;
+                // The count has to see every enemy, so the option pair cap is off here.
+                s_optionEnforceCap = false;
                 foreach (var enemy in enemies) {
                     bool allPass = true;
                     foreach (var c in nonCountConds) {
@@ -67,6 +71,7 @@ namespace WrathTactics.Engine {
                         if (firstCounted == null) firstCounted = enemy;
                     }
                 }
+                s_optionEnforceCap = true;
                 if (!CompareCount(count, countThreshold, countOp)) return false;
                 // Count-only groups (no per-enemy conditions) previously latched nothing,
                 // so TargetType.ConditionTarget resolved to None and the rule silently
