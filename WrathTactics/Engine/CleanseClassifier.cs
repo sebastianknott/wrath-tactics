@@ -74,6 +74,28 @@ namespace WrathTactics.Engine {
             return r;
         }
 
+        /// <summary>Which branches of a Conditional a friendly target can end up in.</summary>
+        internal enum AllySide { Both, TrueOnly, FalseOnly }
+
+        /// <summary>
+        /// Reads the ally/enemy conditions of an AND checker. A member only an enemy satisfies (not-ally, is-enemy)
+        /// closes the true branch to allies; a lone member only an ally satisfies (is-ally, not-enemy) closes the false
+        /// branch. Anything else (OR, other conditions beside the ally check, no ally check) leaves both open. Dual-purpose
+        /// abilities (Cleansing Flames, Water Torrent) keep their damage on the enemy side and their cure on the ally side.
+        /// </summary>
+        internal static AllySide AllySideOf(ConditionsChecker checker) {
+            var conditions = checker?.Conditions;
+            if (conditions == null || conditions.Length == 0 || checker.Operation != Operation.And) return AllySide.Both;
+            bool enemyOnly = false, allyOnly = false;
+            foreach (var cond in conditions) {
+                if (cond is ContextConditionIsAlly ally) { if (ally.Not) enemyOnly = true; else allyOnly = true; }
+                else if (cond is ContextConditionIsEnemy enemy) { if (enemy.Not) allyOnly = true; else enemyOnly = true; }
+            }
+            if (enemyOnly) return AllySide.FalseOnly;
+            if (allyOnly && conditions.Length == 1) return AllySide.TrueOnly;
+            return AllySide.Both;
+        }
+
         /// <summary>True for the ability type whose HP heals count as the tier-2 last resort: spells only.</summary>
         internal static bool IsHealSpellType(AbilityType type) { return type == AbilityType.Spell; }
 
@@ -112,8 +134,10 @@ namespace WrathTactics.Engine {
                         // Heal-vs-damage flip on the target's NegativeEnergyAffinity (undead): only the branch a
                         // living ally takes is read (Heal heals them; Harm hurts them, its cure is for undead).
                         bool? livingBranch = LivingBranch(c.ConditionsChecker);
-                        if (livingBranch != false) WalkList(c.IfTrue, gate.And(CasterFactGate(c.ConditionsChecker)));
-                        if (livingBranch != true) WalkList(c.IfFalse, gate);
+                        var side = AllySideOf(c.ConditionsChecker);
+                        if (livingBranch != false && side != AllySide.FalseOnly)
+                            WalkList(c.IfTrue, gate.And(CasterFactGate(c.ConditionsChecker)));
+                        if (livingBranch != true && side != AllySide.TrueOnly) WalkList(c.IfFalse, gate);
                         break;
                     }
                     case ContextActionSavingThrow st:
@@ -131,10 +155,10 @@ namespace WrathTactics.Engine {
                         break;
                     case ContextActionRemoveBuff removeBuff:
                         // ToCaster strips the caster's own buff (a cost, not a cure of the target).
-                        if (!removeBuff.ToCaster) AddRemoval(CleanseTable.KindsOfBuff(removeBuff.m_Buff?.Get()), gate);
+                        if (!removeBuff.ToCaster) AddBuffRemoval(removeBuff.m_Buff?.Get(), gate);
                         break;
                     case ContextActionRemoveBuffSingleStack single:
-                        AddRemoval(CleanseTable.KindsOfBuff(single.m_TargetBuff?.Get()), gate);
+                        AddBuffRemoval(single.m_TargetBuff?.Get(), gate);
                         break;
                     case ContextActionHealStatDamage _:
                         AddRemoval(AfflictionKinds.StatDebuffAbilityDamage, gate);
@@ -192,6 +216,17 @@ namespace WrathTactics.Engine {
                 m_profile.Add(new CleanseEffect {
                     Kinds = kinds, Check = (CleanseCheckType)(int)d.m_CheckType, Skill = d.m_Skill,
                     MaxCasterLevel = cap, GateFacts = gate.Required, ForbiddenFacts = gate.Forbidden,
+                });
+            }
+
+            // A removal of one named buff: the kinds are the buff's, but it only helps an ally carrying that buff
+            // (Haste strips Slow, Bless strips Bane; PM decision a).
+            void AddBuffRemoval(BlueprintBuff buff, Gate gate) {
+                var kinds = CleanseTable.KindsOfBuff(buff);
+                if (kinds == AfflictionKinds.None) return;
+                m_profile.Add(new CleanseEffect {
+                    Kinds = kinds, GateFacts = gate.Required, ForbiddenFacts = gate.Forbidden,
+                    RemovedBuffGuids = new[] { buff.AssetGuid.ToString() },
                 });
             }
 
