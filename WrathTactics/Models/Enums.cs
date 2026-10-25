@@ -64,7 +64,8 @@ namespace WrathTactics.Models {
         SpellResistMargin,        // numeric — caster level + penetration bonuses − target spell resistance for the rule's own [Then] spell; Enemy-scope; +99 = no SR check / no SR, −99 = immune
         OptionEffect,             // numeric — magnitude of the GroupOption's effect (stat penalty points, or expected lock rounds for Incapacitated); GroupOption only
         OptionSource,             // value-list — DebuffSourceKind name of the GroupOption (Spell/ClassAbility/…); =/!=; GroupOption only
-        OptionEnemiesInRadius     // numeric — enemies the GroupOption's option hits when cast at the enemy (area radius count, 1 for single/chain); GroupOption only
+        OptionEnemiesInRadius,    // numeric — enemies the GroupOption's option hits when cast at the enemy (area radius count, 1 for single/chain); GroupOption only
+        HasAffliction             // 39: value-list — AfflictionKinds name or Any; =/!=; Ally/Self scope: harmful buff/condition kinds the unit carries (WTW-30 cleanse; patched fork = 44)
     }
 
     public enum ConditionOperator {
