@@ -66,6 +66,7 @@ namespace WrathTactics.Engine {
                 CurrentOwner = null;
                 CurrentPartyBestAB = float.NaN;
                 CurrentPartyMaxLevel = -1;
+                ResetPartyMedian();
             }
         }
 
