@@ -26,6 +26,8 @@ namespace WrathTactics.Engine {
                         return ExecuteDebuffGroup(action, owner, target, out issuedCommand);
                     case ActionType.CastConditionOption:
                         return ExecuteConditionOption(action, owner, target, out issuedCommand);
+                    case ActionType.RemoveCondition:
+                        return ExecuteCleanse(action, action.CleanseKinds, owner, target, out issuedCommand);
                     case ActionType.UseItem:
                         return ExecuteUseItem(action.AbilityId, owner, target, out issuedCommand);
                     case ActionType.ToggleActivatable:
@@ -168,6 +170,34 @@ namespace WrathTactics.Engine {
             var option = choice.Value.Option;
             Log.Engine.Info($"CastConditionOption: {owner.CharacterName} casts '{option.Name}' [{option.Kind}] on {unit.CharacterName} (EV {choice.Value.Ev:F2})");
             return IssueAbility(action, owner, option.Ability, option.InventorySource, target, out issuedCommand);
+        }
+
+        // RemoveCondition (WTW-30 cleanse): casts the remedy the validator ranked in this same rule check on the
+        // ally the rule targets. The ally's affliction state is re-read first (it can move between the validator
+        // and here); a latch miss recomputes once. The attempt latch is written when the command is issued, not when it
+        // lands: a dice remedy can fail and the affliction stays, and a second caster must not stack the same remedy.
+        internal static bool ExecuteCleanse(ActionDef action, AfflictionKinds ruleKinds, UnitEntityData owner,
+                                            ResolvedTarget target, out UnitCommand issuedCommand) {
+            issuedCommand = null;
+            var ally = target.Unit;
+            if (ally == null) return false;
+            var choice = CleanseSelection.Take(owner, ally);
+            if (choice != null && (CleanseAfflictionReader.Read(ally) & choice.Value.Covered) == AfflictionKinds.None) {
+                Log.Engine.Debug($"Cleanse: [{choice.Value.Covered}] already gone from {ally.CharacterName}, nothing to cast");
+                return false;
+            }
+            if (choice == null) {
+                Log.Engine.Warn($"Cleanse: no latched remedy for {owner.CharacterName} -> {ally.CharacterName}, recomputing");
+                choice = ActionValidator.FindBestCleanse(owner, ally, ruleKinds, action.Sources);
+                if (choice == null) return false;
+            }
+            var option = choice.Value.Option;
+            Log.Engine.Info($"Cleanse: {owner.CharacterName} casts '{option.Name}' [{option.Kind}] on {ally.CharacterName} "
+                + $"for [{choice.Value.Covered}] (tier {choice.Value.Tier}, expected {choice.Value.Steps}/10 per step)");
+            if (!IssueAbility(action, owner, option.Ability, option.InventorySource, target, out issuedCommand)) return false;
+            var player = Game.Instance.Player;
+            CleanseAttemptLatch.Record(ally.UniqueId, choice.Value.Covered, option.Key, player.GameTime.TotalSeconds, player.IsInCombat);
+            return true;
         }
 
         // Shared issue path of every ability-backed cast: rod, inventory consumption, reservoir, animated command.
