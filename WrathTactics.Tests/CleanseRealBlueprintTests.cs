@@ -53,6 +53,53 @@ namespace WrathTactics.Tests {
             Assert.All(p.Effects, e => Assert.False(e.Suppress));
         }
 
+        // WTW-30 F1: Staggered is its own kind. Heal removes Stun/Daze by descriptor, never stagger (the only stagger
+        // buff it strips is the monster grapple Ecorche_Buff_SeizeSkin, and only for an ally that carries it).
+        [RealBlueprintFact]
+        public void Heal_does_not_cover_an_ally_that_is_only_staggered() {
+            foreach (var path in new[] { "Spells/Level6/Heal", "Spells/Level6/HealCast", "Spells/Level9/HealMass" }) {
+                var bp = RealBlueprints.ByPath<BlueprintAbility>(path + ".jbp");
+                var p = CleanseClassifier.ReadUncached(bp);
+                Assert.True((p.Covers(null) & AfflictionKinds.StunDaze) != 0, path);
+                Assert.Null(p.EffectFor(AfflictionKinds.Staggered, null, g => false));
+                Assert.All(p.Effects.Where(e => (e.Kinds & AfflictionKinds.Staggered) != 0), e => Assert.NotEmpty(e.RemovedBuffGuids));
+            }
+        }
+
+        // Freedom of Movement carries AddConditionImmunity(Staggered): UnitState.HasCondition is false while immune
+        // (IL: m_Conditions[c] > 0 && m_ConditionsImmunity[c] <= 0), so it lifts a stagger, as a suppressor. It no
+        // longer pretends to cover Stun/Daze.
+        [RealBlueprintFact]
+        public void Freedom_of_movement_suppresses_staggered_not_stun_or_daze() {
+            var p = Profile("Spells/Level4/FreedomOfMovement", "4c349361d720e844e846ad8c19959b1e");
+            Assert.True((p.Covers(null) & AfflictionKinds.Staggered) != 0);
+            Assert.Equal(0, (int)(p.Covers(null) & AfflictionKinds.StunDaze));
+            Assert.True(p.EffectFor(AfflictionKinds.Staggered, null).Suppress);
+        }
+
+        // WTW-30 F1 task 2: the log's "Major Ameliorating - Disease covering FearShaken" is correct data, not a
+        // mis-mapping: its suppress buff has an empty m_Buffs list and SuppressBuffs.Descriptor 278528 = Disease | Shaken.
+        [RealBlueprintFact]
+        public void Major_ameliorating_disease_really_suppresses_disease_and_shaken() {
+            var p = Profile("Classes/Witch/WitchHexes/WitchMajorHexes/WitchHexMajorAmelioratingDiseaseAbility",
+                RealBlueprints.GuidOf("Classes/Witch/WitchHexes/WitchMajorHexes/WitchHexMajorAmelioratingDiseaseAbility.jbp"));
+            Assert.Equal(AfflictionKinds.Disease | AfflictionKinds.FearShaken, p.Covers(null));
+            Assert.All(p.Effects, e => Assert.True(e.Suppress));
+            var raw = RealBlueprints.Text("Classes/Witch/WitchHexes/WitchMajorHexes/WitchHexMajorAmelioratingDiseaseSuppressBuff.jbp");
+            Assert.Contains("\"m_IntValue\": 278528", raw);
+            Assert.Equal(SpellDescriptor.Disease | SpellDescriptor.Shaken, (SpellDescriptor)278528L);
+        }
+
+        [RealBlueprintFact]
+        public void Slow_buff_carries_staggered_and_haste_removes_it() {
+            const string slow = "0bc608c3f2b548b44b7146b7530613ac";
+            var buff = RealBlueprints.ByGuid<BlueprintBuff>(slow);
+            Assert.True((CleanseTable.KindsOfBuff(buff) & AfflictionKinds.Staggered) != 0);
+            var haste = Profile("Spells/Level3/Haste", "486eaff58293f6441a5c2759c4872f98");
+            Assert.NotNull(haste.EffectFor(AfflictionKinds.Staggered, null, g => g == slow));
+            Assert.Null(haste.EffectFor(AfflictionKinds.Staggered, null, g => false));
+        }
+
         [RealBlueprintTheory]
         [InlineData("Spells/Level3/RemoveCurse", "b48674cef2bff5e478a007cf57d8345b", AfflictionKinds.Curse)]
         [InlineData("Spells/Level3/RemoveDisease", "4093d5a0eb5cae94e909eb1e0e1a6b36", AfflictionKinds.Disease)]
@@ -139,7 +186,7 @@ namespace WrathTactics.Tests {
 
         static readonly Dictionary<string, AfflictionKinds> MercyKinds = new Dictionary<string, AfflictionKinds> {
             { "MercyFatigued", AfflictionKinds.FatigueExhausted }, { "MercyExhausted", AfflictionKinds.FatigueExhausted },
-            { "MercyDazed", AfflictionKinds.StunDaze }, { "MercyStaggered", AfflictionKinds.StunDaze },
+            { "MercyDazed", AfflictionKinds.StunDaze }, { "MercyStaggered", AfflictionKinds.Staggered },
             { "MercyStunned", AfflictionKinds.StunDaze },
             { "MercySickened", AfflictionKinds.NauseaSickened }, { "MercyNauseated", AfflictionKinds.NauseaSickened },
             { "MercyShaken", AfflictionKinds.FearShaken }, { "MercyFrightened", AfflictionKinds.FearShaken },

@@ -21,7 +21,7 @@ namespace WrathTactics.Tests {
         [InlineData(SpellDescriptor.Confusion, AfflictionKinds.Confusion)]
         [InlineData(SpellDescriptor.Stun, AfflictionKinds.StunDaze)]
         [InlineData(SpellDescriptor.Daze, AfflictionKinds.StunDaze)]
-        [InlineData(SpellDescriptor.Staggered, AfflictionKinds.StunDaze)]
+        [InlineData(SpellDescriptor.Staggered, AfflictionKinds.Staggered)]
         [InlineData(SpellDescriptor.Fear, AfflictionKinds.FearShaken)]
         [InlineData(SpellDescriptor.Shaken, AfflictionKinds.FearShaken)]
         [InlineData(SpellDescriptor.Frightened, AfflictionKinds.FearShaken)]
@@ -58,6 +58,7 @@ namespace WrathTactics.Tests {
         [InlineData(UnitCondition.Paralyzed, AfflictionKinds.Paralysis)]
         [InlineData(UnitCondition.Confusion, AfflictionKinds.Confusion)]
         [InlineData(UnitCondition.Stunned, AfflictionKinds.StunDaze)]
+        [InlineData(UnitCondition.Staggered, AfflictionKinds.Staggered)]
         [InlineData(UnitCondition.Dazed, AfflictionKinds.StunDaze)]
         [InlineData(UnitCondition.Shaken, AfflictionKinds.FearShaken)]
         [InlineData(UnitCondition.Frightened, AfflictionKinds.FearShaken)]
@@ -202,7 +203,7 @@ namespace WrathTactics.Tests {
         [Fact]
         public void Kinds_none_becomes_all_on_switch() {
             Assert.Equal(CleanseDefaults.All, CleanseDefaults.KindsFor(ActionType.RemoveCondition, AfflictionKinds.None));
-            Assert.Equal(14, CleanseTable.Count(CleanseDefaults.All));
+            Assert.Equal(15, CleanseTable.Count(CleanseDefaults.All));
         }
 
         [Fact]
@@ -269,6 +270,16 @@ namespace WrathTactics.Tests {
             Assert.Equal(AfflictionKinds.None, mask);
         }
 
+        // A buff can carry the Staggered descriptor while the condition is off (Freedom of Movement's condition
+        // immunity); the unit is then not staggered and must not be offered another cure.
+        [Fact]
+        public void Staggered_bit_needs_the_live_condition() {
+            var mask = AfflictionKinds.Poison | AfflictionKinds.Staggered;
+            Assert.Equal(AfflictionKinds.Poison, CleanseAfflictionReader.ConfirmStagger(mask, false));
+            Assert.Equal(mask, CleanseAfflictionReader.ConfirmStagger(mask, true));
+            Assert.Equal(AfflictionKinds.Poison, CleanseAfflictionReader.ConfirmStagger(AfflictionKinds.Poison, false));
+        }
+
         [Fact]
         public void Unknown_value_never_matches_under_equal() {
             Assert.False(CleanseAfflictionReader.Matches(AfflictionKinds.Poison, "Bogus", ConditionOperator.Equal));
@@ -277,7 +288,7 @@ namespace WrathTactics.Tests {
 
         [Fact]
         public void All_kinds_covers_every_defined_bit() {
-            Assert.Equal(AfflictionKinds.SlowedEntangled | (AfflictionKinds)((1 << 13) - 1), CleanseAfflictionReader.AllKinds);
+            Assert.Equal(AfflictionKinds.Staggered | AfflictionKinds.SlowedEntangled | (AfflictionKinds)((1 << 13) - 1), CleanseAfflictionReader.AllKinds);
         }
 
         [Fact]
@@ -311,6 +322,7 @@ namespace WrathTactics.Tests {
             Assert.Equal(13, (int)ActionType.RemoveCondition);
             Assert.Equal(1, (int)AfflictionKinds.Paralysis);
             Assert.Equal(1 << 13, (int)AfflictionKinds.SlowedEntangled);
+            Assert.Equal(1 << 14, (int)AfflictionKinds.Staggered);
         }
     
         [Fact]
