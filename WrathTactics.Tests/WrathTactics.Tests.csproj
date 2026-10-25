@@ -22,6 +22,12 @@
   </ItemGroup>
 
   <ItemGroup>
+    <!-- RealBlueprints reads <GameInstall>/blueprints.zip at test time. -->
+    <Reference Include="System.IO.Compression" />
+    <Reference Include="System.IO.Compression.FileSystem" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\WrathTactics\WrathTactics.csproj" />
   </ItemGroup>
 
@@ -46,19 +52,19 @@
     Mod's output, since the game already provides them at runtime). The test runner
     has no game runtime, so static fields like UnitEntityData LastMatchedEnemy in
     ConditionEvaluator can't resolve their types and TypeLoadException fires.
-    Copy the Game DLLs from the symlinked GameInstall/ into the test output, then
-    overlay the publicized variants the Mod was built against so member signatures
-    match.
+    Copy the Game DLLs from the symlinked GameInstall/ into the test output. The
+    publicized variants the Mod is compiled against are deliberately NOT overlaid:
+    mono does not enforce member visibility, and their BepInEx OriginalAttributes
+    attributes crash mono's native GetCustomAttributes (SIGSEGV) when Newtonsoft
+    deserializes real blueprints in the CleanseRealBlueprintTests.
   -->
   <Target Name="CopyGameDllsToTestOutput" AfterTargets="Build">
     <ItemGroup>
       <_GameDllsBase Include="$(SolutionDir)GameInstall\Wrath_Data\Managed\*.dll" />
       <_GameDllsUMM Include="$(SolutionDir)GameInstall\Wrath_Data\Managed\UnityModManager\*.dll" />
-      <_PublicizedDlls Include="$(SolutionDir)WrathTactics\obj\$(Configuration)\publicized\*.dll" />
     </ItemGroup>
     <Copy SourceFiles="@(_GameDllsBase)" DestinationFolder="$(OutputPath)" SkipUnchangedFiles="true" />
     <Copy SourceFiles="@(_GameDllsUMM)" DestinationFolder="$(OutputPath)" SkipUnchangedFiles="true" />
-    <Copy SourceFiles="@(_PublicizedDlls)" DestinationFolder="$(OutputPath)" SkipUnchangedFiles="false" />
   </Target>
 
 </Project>
