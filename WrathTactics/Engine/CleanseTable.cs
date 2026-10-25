@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using Kingmaker.Blueprints.Classes.Spells;
+using Kingmaker.Blueprints;
 using Kingmaker.UnitLogic;
 using Kingmaker.UnitLogic.Buffs.Blueprints;
 using Kingmaker.UnitLogic.Buffs.Components;
@@ -66,6 +67,32 @@ namespace WrathTactics.Engine {
                     case BuffStatusCondition bsc: k |= KindsFromCondition(bsc.Condition); break;
                 }
             }
+            return k;
+        }
+
+        /// <summary>
+        /// Kinds a buff component protects against: SuppressBuffs (descriptor and listed buffs),
+        /// BuffDescriptorImmunity, AddConditionImmunity. None for every other component.
+        /// </summary>
+        internal static AfflictionKinds ProtectedKinds(BlueprintComponent comp) {
+            switch (comp) {
+                case SuppressBuffs sup: {
+                    var k = KindsFromDescriptor((SpellDescriptor)sup.Descriptor);
+                    if (sup.m_Buffs != null)
+                        foreach (var r in sup.m_Buffs) k |= KindsOfBuff(r?.Get());
+                    return k;
+                }
+                case BuffDescriptorImmunity imm: return KindsFromDescriptor((SpellDescriptor)imm.Descriptor);
+                case AddConditionImmunity cond: return KindsFromCondition(cond.Condition);
+                default: return AfflictionKinds.None;
+            }
+        }
+
+        /// <summary>Union of what all protective components of a buff protect against.</summary>
+        internal static AfflictionKinds ProtectedKinds(BlueprintBuff buff) {
+            var k = AfflictionKinds.None;
+            if (buff?.ComponentsArray == null) return k;
+            foreach (var comp in buff.ComponentsArray) k |= ProtectedKinds(comp);
             return k;
         }
 
