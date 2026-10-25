@@ -63,13 +63,19 @@ namespace WrathTactics.Tests {
 
         // ---- decision b: dual-purpose damage + cure abilities ----
 
-        [RealBlueprintTheory]
-        [InlineData("Mythic/Angel/AngelSpells/AngelCleansingFlames")]
-        [InlineData("Mythic/Azata/AzataSpells/WaterTorrent")]
-        public void Dual_purpose_ability_with_an_ally_branch_cure_that_can_target_friends_is_usable(string path) {
-            var bp = Ability(path);
+        [RealBlueprintFact]
+        public void Water_torrent_with_an_enemy_only_damage_branch_is_usable_on_friends() {
+            var bp = Ability("Mythic/Azata/AzataSpells/WaterTorrent");
             Assert.True(CleanseTargeting.AllyTargetableByFlags(bp, allyIsOwner: false));
             Assert.True(CleanseClassifier.Get(bp).IsCleanse, "the cure sits on the branch an ally takes");
+        }
+
+        // WP3d check: the ally branch of Cleansing Flames carries ContextActionDealDamage (Holy, CL flat bonus),
+        // so casting it on an ally may hurt them. Generic rule: damage on an ally-reachable branch voids the cure.
+        [RealBlueprintFact]
+        public void Cleansing_flames_damages_allies_so_it_is_not_a_remedy() {
+            var bp = Ability("Mythic/Angel/AngelSpells/AngelCleansingFlames");
+            Assert.False(CleanseClassifier.Get(bp).IsCleanse);
         }
 
         [RealBlueprintFact]
