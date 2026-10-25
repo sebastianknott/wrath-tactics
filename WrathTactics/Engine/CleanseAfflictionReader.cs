@@ -21,6 +21,8 @@ namespace WrathTactics.Engine {
         public bool SelfCast;
         /// <summary>Cast by a friendly unit (buff from a party member, not an attack).</summary>
         public bool AllySourced;
+        /// <summary>Casting level of the buff (the level a dispel check is rolled against).</summary>
+        public int CasterLevel;
     }
 
     /// <summary>
@@ -37,13 +39,49 @@ namespace WrathTactics.Engine {
             return mask;
         }
 
+        /// <summary>Highest casting level per affliction bit over the counted buffs only.</summary>
+        internal static Dictionary<AfflictionKinds, int> CasterLevels(IEnumerable<BuffReading> buffs) {
+            var result = new Dictionary<AfflictionKinds, int>();
+            if (buffs == null) return result;
+            foreach (var b in buffs) {
+                if (!Counts(b)) continue;
+                foreach (var bit in CleanseTable.Bits(b.Kinds))
+                    if (!result.TryGetValue(bit, out var known) || b.CasterLevel > known) result[bit] = b.CasterLevel;
+            }
+            return result;
+        }
+
         internal static bool Counts(BuffReading b) {
             return !b.Polymorph && !b.Protective && !b.SelfCast && !b.AllySourced;
         }
 
+        // Unit conditions that map to a harmful kind, computed once.
+        static readonly KeyValuePair<UnitCondition, AfflictionKinds>[] s_conditionKinds = BuildConditionKinds();
+
+        static KeyValuePair<UnitCondition, AfflictionKinds>[] BuildConditionKinds() {
+            var list = new List<KeyValuePair<UnitCondition, AfflictionKinds>>();
+            foreach (UnitCondition c in Enum.GetValues(typeof(UnitCondition))) {
+                var k = CleanseTable.KindsFromCondition(c);
+                if (k != AfflictionKinds.None) list.Add(new KeyValuePair<UnitCondition, AfflictionKinds>(c, k));
+            }
+            return list.ToArray();
+        }
+
         /// <summary>Mask of a unit right now (None for null).</summary>
         internal static AfflictionKinds Read(UnitEntityData unit) {
+            return unit == null ? AfflictionKinds.None : Read(unit, ReadBuffs(unit));
+        }
+
+        /// <summary>Mask from already-read buff readings (avoids a second pass over the buffs).</summary>
+        internal static AfflictionKinds Read(UnitEntityData unit, List<BuffReading> readings) {
             if (unit == null) return AfflictionKinds.None;
+            var conditions = AfflictionKinds.None;
+            foreach (var pair in s_conditionKinds)
+                if (unit.State.HasCondition(pair.Key)) conditions |= pair.Value;
+            return Mask(readings, conditions);
+        }
+
+        internal static List<BuffReading> ReadBuffs(UnitEntityData unit) {
             var readings = new List<BuffReading>();
             foreach (var buff in unit.Buffs.RawFacts) {
                 var bp = buff.Blueprint;
@@ -55,14 +93,10 @@ namespace WrathTactics.Engine {
                     Protective = IsProtective(bp),
                     SelfCast = caster != null && caster == unit,
                     AllySourced = caster != null && caster != unit && !caster.IsPlayersEnemy,
+                    CasterLevel = buff.Context?.Params?.CasterLevel ?? 0,
                 });
             }
-            var conditions = AfflictionKinds.None;
-            foreach (UnitCondition c in Enum.GetValues(typeof(UnitCondition))) {
-                var k = CleanseTable.KindsFromCondition(c);
-                if (k != AfflictionKinds.None && unit.State.HasCondition(c)) conditions |= k;
-            }
-            return Mask(readings, conditions);
+            return readings;
         }
 
         /// <summary>
@@ -87,7 +121,7 @@ namespace WrathTactics.Engine {
             return Enum.TryParse(value, false, out k) && k != AfflictionKinds.None ? k : AfflictionKinds.None;
         }
 
-        internal const AfflictionKinds AllKinds = (AfflictionKinds)((1 << 14) - 1);
+        internal static AfflictionKinds AllKinds { get { return CleanseDefaults.All; } }
 
         /// <summary>
         /// Condition semantics: Equal = the ally carries at least one of the chosen kinds, NotEqual = none of them

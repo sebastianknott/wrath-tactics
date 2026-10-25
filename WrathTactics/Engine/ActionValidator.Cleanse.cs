@@ -39,7 +39,8 @@ namespace WrathTactics.Engine {
                 return null;
             }
 
-            var mask = CleanseAfflictionReader.Read(ally);
+            var buffReadings = CleanseAfflictionReader.ReadBuffs(ally);
+            var mask = CleanseAfflictionReader.Read(ally, buffReadings);
             var wanted = mask & ruleKinds;
             if (wanted == AfflictionKinds.None) {
                 Log.Engine.Trace($"Cleanse {owner.CharacterName} -> {ally.CharacterName}: nothing to cure (ally carries [{mask}], rule wants [{ruleKinds}])");
@@ -55,7 +56,7 @@ namespace WrathTactics.Engine {
             var options = DebuffOptionEnumerator.EnumerateCleanse(owner, ally, sources, rejected);
             var facts = DebuffOptionEnumerator.OwnerFactGuids(owner);
             var allyBuffs = TargetBuffGuids(ally);
-            var afflictionCl = AfflictionCasterLevels(ally);
+            var afflictionCl = CleanseAfflictionReader.CasterLevels(buffReadings);
             var inputs = options.Select(o => InputOf(owner, o, facts, afflictionCl)).ToList();
 
             var player = Game.Instance.Player;
@@ -116,12 +117,37 @@ namespace WrathTactics.Engine {
 
         static CleanseOptionInput InputOf(UnitEntityData owner, CleanseOption option, HashSet<string> facts,
                                           Dictionary<AfflictionKinds, int> afflictionCl) {
+            var ps = new LazyParams(option);
             return new CleanseOptionInput {
                 Key = option.Key, Name = option.Name, Profile = option.Profile,
                 Grade = option.SpellLevel, IsSlot = option.IsSlot,
                 HasFact = facts.Contains,
-                Chance = (effect, bit) => CheckChance(owner, option, effect, bit, afflictionCl),
+                Chance = (effect, bit) => CheckChance(owner, ps, effect, bit, afflictionCl),
             };
+        }
+
+        // The ability's calculated parameters, read once per option and only when a check needs them.
+        sealed class LazyParams {
+            readonly CleanseOption m_option;
+            bool m_done;
+            public int? Dc, Cl;
+            public LazyParams(CleanseOption option) { m_option = option; }
+
+            public void Resolve() {
+                if (m_done) return;
+                m_done = true;
+                try {
+                    var p = m_option.Ability.CalculateParams();
+                    Dc = p.DC;
+                    Cl = p.CasterLevel;
+                } catch (Exception ex) {
+                    // Per-tick guard: unreadable ability parameters degrade this check to the unknown-chance default.
+                    if (!s_cleanseParamsWarned) {
+                        s_cleanseParamsWarned = true;
+                        Log.Engine.Warn($"Cleanse: parameters of '{m_option.Name}' unreadable ({ex.GetType().Name}), using the unknown-check chance");
+                    }
+                }
+            }
         }
 
         // Removal chance of one effect against one affliction, from non-rolling inputs only: the ability's own
@@ -129,39 +155,16 @@ namespace WrathTactics.Engine {
         // of the ally's affliction. An input that cannot be read stays null and CleanseChance falls back to its
         // coin-flip default (UNVERIFIED paths, per the plan: DC-check bonus = caster level, CasterLevel check
         // DC = 11 + the affliction's caster level, skill checks add the plain skill value).
-        static double CheckChance(UnitEntityData owner, CleanseOption option, CleanseEffect effect, AfflictionKinds bit,
+        static double CheckChance(UnitEntityData owner, LazyParams ps, CleanseEffect effect, AfflictionKinds bit,
                                   Dictionary<AfflictionKinds, int> afflictionCl) {
             if (effect.Check == CleanseCheckType.None) return 1.0;
-            int? dc = null, cl = null;
-            try {
-                var p = option.Ability.CalculateParams();
-                dc = p.DC;
-                cl = p.CasterLevel;
-            } catch (Exception ex) {
-                // Per-tick guard: unreadable ability parameters degrade this check to the unknown-chance default.
-                if (!s_cleanseParamsWarned) {
-                    s_cleanseParamsWarned = true;
-                    Log.Engine.Warn($"Cleanse: parameters of '{option.Name}' unreadable ({ex.GetType().Name}), using the unknown-check chance");
-                }
-            }
+            ps.Resolve();
+            int? dc = ps.Dc, cl = ps.Cl;
             int? skill = null;
             if (effect.Check == CleanseCheckType.SkillDC || effect.Check == CleanseCheckType.SkillCasterLevel)
                 skill = owner.Stats.GetStat(effect.Skill)?.ModifiedValue;
             int? affliction = afflictionCl.TryGetValue(bit, out var level) ? level : (int?)null;
             return CleanseChance.Probability(effect.Check, dc, cl, skill, affliction, effect.MaxCasterLevel);
-        }
-
-        // Highest casting level of the ally's buffs per affliction bit (the CL a dispel check is rolled against).
-        static Dictionary<AfflictionKinds, int> AfflictionCasterLevels(UnitEntityData ally) {
-            var result = new Dictionary<AfflictionKinds, int>();
-            foreach (var buff in ally.Buffs.RawFacts) {
-                var bp = buff.Blueprint;
-                if (bp == null || buff.Context == null) continue;
-                int level = buff.Context.Params.CasterLevel;
-                foreach (var bit in CleanseTable.Bits(CleanseTable.KindsOfBuff(bp)))
-                    if (!result.TryGetValue(bit, out var known) || level > known) result[bit] = level;
-            }
-            return result;
         }
     }
 }
