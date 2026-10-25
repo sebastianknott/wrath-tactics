@@ -62,6 +62,14 @@ namespace WrathTactics.Localization {
             "Spell", "ClassAbility", "ItemAbility", "Scroll", "ThrownItem",
         };
 
+        // AfflictionKinds names for HasAffliction (WTW-30 cleanse) — "Any" first, then every kind in enum order.
+        public static List<string> KeysForAffliction() => new List<string> {
+            "Any", "Paralysis", "Confusion", "StunDaze", "FearShaken", "NauseaSickened", "Blindness", "Poison",
+            "Disease", "Curse", "FatigueExhausted", "StatDebuffAbilityDamage", "NegativeLevel", "Petrified", "SlowedEntangled",
+        };
+
+        public static List<string> LabelsForAffliction() => Map(KeysForAffliction(), k => $"enum.affliction.{k}".i18n());
+
         public static List<string> LabelsForDebuffSource() => Map(KeysForDebuffSource(), k => $"enum.debuffsource.{k}".i18n());
 
         public static List<string> LabelsForCreatureType() => Map(KeysForCreatureType(), k => $"enum.creature_type.{k}".i18n());
