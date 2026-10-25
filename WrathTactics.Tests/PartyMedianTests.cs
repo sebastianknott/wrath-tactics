@@ -91,7 +91,7 @@ namespace WrathTactics.Tests {
         [Fact]
         public void property_is_appended_after_the_existing_ones() {
             // 35 on this branch (off upstream/master); local-fixups.sh pins the integration value.
-            Assert.Equal(35, (int)ConditionProperty.EnemyHDMinusPartyMedian);
+            Assert.Equal(44, (int)ConditionProperty.EnemyHDMinusPartyMedian);
             Assert.Equal(25, (int)ConditionProperty.EnemyHDMinusPartyLevel); // stored rules keep their meaning
         }
     }

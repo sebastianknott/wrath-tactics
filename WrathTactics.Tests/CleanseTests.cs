@@ -283,7 +283,7 @@ namespace WrathTactics.Tests {
         [Fact]
         public void Pin_index_39() {
             // pinned per branch: 39 on the topic branches, 44 on patched (local-fixups.sh rewrites this).
-            Assert.Equal(39, (int)ConditionProperty.HasAffliction);
+            Assert.Equal(45, (int)ConditionProperty.HasAffliction);
         }
 
         [Fact]
