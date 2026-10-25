@@ -203,7 +203,8 @@ namespace WrathTactics.UI {
                     || condition.Property == ConditionProperty.EngagedEnemyCount
                     || condition.Property == ConditionProperty.OptionEffect
                     || condition.Property == ConditionProperty.OptionEnemiesInRadius
-                    || condition.Property == ConditionProperty.AdjacentEnemyCount;
+                    || condition.Property == ConditionProperty.AdjacentEnemyCount
+                    || condition.Property == ConditionProperty.EnemyHDMinusPartyMedian;
 
                 if (propNeedsOperator) {
                     // Operator selector where the "<" label was
@@ -837,6 +838,7 @@ namespace WrathTactics.UI {
                         ConditionProperty.SpellResistMargin,
                         ConditionProperty.ABMinusAC,
                         ConditionProperty.EnemyHDMinusPartyLevel,
+                        ConditionProperty.EnemyHDMinusPartyMedian,
                         ConditionProperty.HasClass,
                         ConditionProperty.WithinRange,
                         ConditionProperty.IsTargetingSelf,
@@ -863,6 +865,7 @@ namespace WrathTactics.UI {
                         ConditionProperty.SpellResistMargin,
                         ConditionProperty.ABMinusAC,
                         ConditionProperty.EnemyHDMinusPartyLevel,
+                        ConditionProperty.EnemyHDMinusPartyMedian,
                         ConditionProperty.HasClass,
                         ConditionProperty.WithinRange,
                         ConditionProperty.IsBeingCastOnByAlly,
