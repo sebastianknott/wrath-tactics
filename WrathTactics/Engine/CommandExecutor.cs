@@ -26,6 +26,8 @@ namespace WrathTactics.Engine {
                         return ExecuteDebuffGroup(action, owner, target, out issuedCommand);
                     case ActionType.CastConditionOption:
                         return ExecuteConditionOption(action, owner, target, out issuedCommand);
+                    case ActionType.RemoveCondition:
+                        return ExecuteCleanse(action, action.CleanseKinds, owner, target, out issuedCommand);
                     case ActionType.UseItem:
                         return ExecuteUseItem(action.AbilityId, owner, target, out issuedCommand);
                     case ActionType.ToggleActivatable:

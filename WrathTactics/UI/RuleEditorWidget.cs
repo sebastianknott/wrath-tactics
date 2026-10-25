@@ -195,6 +195,9 @@ namespace WrathTactics.UI {
             // Fallback chain rows (CastSpell / CastAbility)
             SetupFallbackRows(bodyContainer.transform);
 
+            // Cleanse kinds checkbox grid (RemoveCondition)
+            SetupCleanseRows(bodyContainer.transform);
+
             // TARGET: target row
             SetupTargetRow(bodyContainer.transform);
 
@@ -225,8 +228,9 @@ namespace WrathTactics.UI {
             // Rows rendered by RebuildBody, in order (keep in sync with it):
             // header | IF label | cond rows | per-group add row (or AddFirstCond) | (groups-1) OR dividers
             // | flourish | action row | [reservoir row] | fallback rows | [+Fallback row] | target row | cooldown row
+            int cleanseRows = CleanseRowCount(rule.Action.Type);
             int rows = (hideHeader ? 0 : 1) + 1 + condCount + Mathf.Max(groupCount, 1) + Mathf.Max(0, groupCount - 1)
-                + 1 + 1 + reservoirRows + fallbackCount + (chainCapable ? 1 : 0) + 1 + 1;
+                + 1 + 1 + reservoirRows + fallbackCount + (chainCapable ? 1 : 0) + cleanseRows + 1 + 1;
             float height = headerH
                 + Theme.SectionLabelHeight
                 + condCount * Theme.RowHeight
@@ -237,6 +241,7 @@ namespace WrathTactics.UI {
                 + reservoirRows * Theme.RowHeight           // Arcane Reservoir
                 + fallbackCount * Theme.RowHeight
                 + (chainCapable ? Theme.InlineRowHeight : 0f)
+                + cleanseRows * Theme.InlineRowHeight
                 + Theme.RowHeight                           // target
                 + Theme.RowHeight                           // cooldown
                 + Mathf.Max(0, rows - 1) * bodySpacing
