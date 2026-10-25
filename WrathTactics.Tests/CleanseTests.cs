@@ -1,3 +1,4 @@
+using Newtonsoft.Json;
 using System.Linq;
 using Kingmaker.Blueprints.Classes.Spells;
 using Kingmaker.UnitLogic.Abilities.Blueprints;
@@ -268,6 +269,26 @@ namespace WrathTactics.Tests {
         public void Pin_index_39() {
             // pinned per branch: 39 on the topic branches, 44 on patched (local-fixups.sh rewrites this).
             Assert.Equal(39, (int)ConditionProperty.HasAffliction);
+        }
+
+        [Fact]
+        public void Action_index_13() {
+            // pinned per branch: RemoveCondition is 13 on the topic branches and on patched.
+            Assert.Equal(13, (int)ActionType.RemoveCondition);
+        }
+
+        [Fact]
+        public void Cleanse_kinds_survive_a_json_round_trip() {
+            var kinds = AfflictionKinds.Poison | AfflictionKinds.Curse | AfflictionKinds.SlowedEntangled;
+            var json = JsonConvert.SerializeObject(new ActionDef { Type = ActionType.RemoveCondition, CleanseKinds = kinds });
+            var back = JsonConvert.DeserializeObject<ActionDef>(json);
+            Assert.Equal(ActionType.RemoveCondition, back.Type);
+            Assert.Equal(kinds, back.CleanseKinds);
+        }
+
+        [Fact]
+        public void Legacy_action_json_has_no_cleanse_kinds() {
+            Assert.Equal(AfflictionKinds.None, JsonConvert.DeserializeObject<ActionDef>("{\"Type\":0,\"AbilityId\":\"x\"}").CleanseKinds);
         }
 
         [Fact]
