@@ -19,7 +19,7 @@ namespace WrathTactics.Engine {
         // GUID of CreatureAbilities/NegativeEnergyAffinity.jbp — the exact fact
         // CureLightWounds.jbp's ContextConditionHasFact gates the heal-vs-damage flip on.
         // Resolved lazily through ResourcesLibrary; cached for the session.
-        const string NegativeEnergyAffinityGuid = "d5ee498e19722854198439629c1841a5";
+        internal const string NegativeEnergyAffinityGuid = "d5ee498e19722854198439629c1841a5";
         static BlueprintFeature s_negativeEnergyAffinity;
         static bool s_negativeEnergyAffinityResolved;
 
