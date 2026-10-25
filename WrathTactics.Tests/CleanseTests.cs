@@ -276,5 +276,23 @@ namespace WrathTactics.Tests {
             Assert.Equal(1, (int)AfflictionKinds.Paralysis);
             Assert.Equal(1 << 13, (int)AfflictionKinds.SlowedEntangled);
         }
-    }
+    
+        [Fact]
+        public void Forbidden_fact_disables_the_effect() {
+            var p = new CleanseProfile();
+            p.Add(new CleanseEffect { Kinds = AfflictionKinds.Curse, GateFacts = new[] { "a" }, ForbiddenFacts = new[] { "x" } });
+            Assert.Equal(AfflictionKinds.Curse, p.Covers(f => f == "a"));
+            Assert.Equal(AfflictionKinds.None, p.Covers(f => f == "a" || f == "x"));
+            Assert.Equal(AfflictionKinds.None, p.Covers(null));
+        }
+
+        [Fact]
+        public void Forbidden_only_effect_is_active_when_no_facts_are_held() {
+            var p = new CleanseProfile();
+            p.Add(new CleanseEffect { Kinds = AfflictionKinds.Curse, ForbiddenFacts = new[] { "x" } });
+            Assert.Equal(AfflictionKinds.Curse, p.Covers(null));
+            Assert.Equal(AfflictionKinds.Curse, p.Covers(f => false));
+            Assert.Equal(AfflictionKinds.None, p.Covers(f => f == "x"));
+        }
+}
 }
