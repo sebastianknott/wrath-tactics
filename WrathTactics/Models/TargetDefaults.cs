@@ -19,6 +19,7 @@ namespace WrathTactics.Models {
                 case ActionType.CastDebuffGroup:
                     return TargetType.EnemyHighestThreat;
                 case ActionType.CastConditionOption:
+                case ActionType.RemoveCondition:
                     return TargetType.ConditionTarget;
                 default:
                     return null;
