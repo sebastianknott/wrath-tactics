@@ -1,5 +1,6 @@
 using System.Linq;
 using Kingmaker.Blueprints.Classes.Spells;
+using Kingmaker.UnitLogic.Abilities.Blueprints;
 using Kingmaker.UnitLogic;
 using WrathTactics.Engine;
 using WrathTactics.Models;
@@ -143,6 +144,16 @@ namespace WrathTactics.Tests {
             Assert.Equal(CleanseRanking.TierHeal, p.Tier);
         }
 
+        [Theory]
+        [InlineData(AbilityType.Spell, true)]
+        [InlineData(AbilityType.Supernatural, false)]
+        [InlineData(AbilityType.Extraordinary, false)]
+        [InlineData(AbilityType.SpellLike, false)]
+        [InlineData(AbilityType.Special, false)]
+        public void Only_spell_hp_heals_are_the_last_resort(AbilityType type, bool expected) {
+            Assert.Equal(expected, CleanseClassifier.IsHealSpellType(type));
+        }
+
         [Fact]
         public void Gated_effect_needs_the_caster_fact() {
             var p = new CleanseProfile();
@@ -206,6 +217,57 @@ namespace WrathTactics.Tests {
         public void Other_action_leaves_kinds(ActionType action) {
             Assert.Equal(AfflictionKinds.None, CleanseDefaults.KindsFor(action, AfflictionKinds.None));
             Assert.Equal(AfflictionKinds.Poison, CleanseDefaults.KindsFor(action, AfflictionKinds.Poison));
+        }
+
+        // ---- ally affliction mask (HasAffliction) ----
+
+        static BuffReading Buff(AfflictionKinds k, bool self = false, bool ally = false, bool poly = false, bool prot = false) {
+            return new BuffReading { Kinds = k, SelfCast = self, AllySourced = ally, Polymorph = poly, Protective = prot };
+        }
+
+        [Fact]
+        public void Ally_mask_reads_paralysis() {
+            var mask = CleanseAfflictionReader.Mask(new[] { Buff(AfflictionKinds.Paralysis), Buff(AfflictionKinds.Poison) },
+                AfflictionKinds.Blindness);
+            Assert.Equal(AfflictionKinds.Paralysis | AfflictionKinds.Poison | AfflictionKinds.Blindness, mask);
+            Assert.True(CleanseAfflictionReader.Matches(mask, "Paralysis", ConditionOperator.Equal));
+            Assert.False(CleanseAfflictionReader.Matches(mask, "Paralysis", ConditionOperator.NotEqual));
+            Assert.True(CleanseAfflictionReader.Matches(mask, "Curse", ConditionOperator.NotEqual));
+            Assert.True(CleanseAfflictionReader.Matches(mask, "Any", ConditionOperator.Equal));
+        }
+
+        [Fact]
+        public void Self_cast_buff_is_ignored() {
+            var mask = CleanseAfflictionReader.Mask(new[] { Buff(AfflictionKinds.SlowedEntangled, self: true) }, AfflictionKinds.None);
+            Assert.Equal(AfflictionKinds.None, mask);
+            Assert.False(CleanseAfflictionReader.Matches(mask, "Any", ConditionOperator.Equal));
+        }
+
+        [Fact]
+        public void Ally_sourced_polymorph_and_protective_buffs_are_ignored() {
+            var mask = CleanseAfflictionReader.Mask(new[] {
+                Buff(AfflictionKinds.Curse, ally: true),
+                Buff(AfflictionKinds.StunDaze, poly: true),
+                Buff(AfflictionKinds.SlowedEntangled, prot: true),
+            }, AfflictionKinds.None);
+            Assert.Equal(AfflictionKinds.None, mask);
+        }
+
+        [Fact]
+        public void Unknown_value_never_matches_under_equal() {
+            Assert.False(CleanseAfflictionReader.Matches(AfflictionKinds.Poison, "Bogus", ConditionOperator.Equal));
+            Assert.True(CleanseAfflictionReader.Matches(AfflictionKinds.Poison, "None", ConditionOperator.NotEqual));
+        }
+
+        [Fact]
+        public void All_kinds_covers_every_defined_bit() {
+            Assert.Equal(AfflictionKinds.SlowedEntangled | (AfflictionKinds)((1 << 13) - 1), CleanseAfflictionReader.AllKinds);
+        }
+
+        [Fact]
+        public void Pin_index_39() {
+            // pinned per branch: 39 on the topic branches, 44 on patched (local-fixups.sh rewrites this).
+            Assert.Equal(40, (int)ConditionProperty.HasAffliction);
         }
 
         [Fact]

@@ -53,6 +53,9 @@ namespace WrathTactics.Engine {
             return profile;
         }
 
+        /// <summary>True for the ability type whose HP heals count as the tier-2 last resort: spells only.</summary>
+        internal static bool IsHealSpellType(AbilityType type) { return type == AbilityType.Spell; }
+
         static T Find<T>(BlueprintScriptableObject bp) where T : BlueprintComponent {
             if (bp?.ComponentsArray == null) return null;
             foreach (var c in bp.ComponentsArray)
@@ -64,7 +67,10 @@ namespace WrathTactics.Engine {
             readonly CleanseProfile m_profile = new CleanseProfile();
             static readonly string[] NoGate = new string[0];
 
+            bool m_spell;
+
             public CleanseProfile Read(BlueprintAbility bp) {
+                m_spell = IsHealSpellType(bp.Type);
                 ReadEffects(bp);
                 var touch = Find<AbilityEffectStickyTouch>(bp)?.TouchDeliveryAbility;
                 if (touch != null) ReadEffects(touch);
@@ -116,7 +122,9 @@ namespace WrathTactics.Engine {
                         AddRemoval(AfflictionKinds.NegativeLevel, gate);
                         break;
                     case ContextActionHealTarget _:
-                        m_profile.HealsHp = true;
+                        // Only spell-slot heals (Heal family) are the last resort; Lay on Hands and other
+                        // class-resource abilities stay regular cleanses (PM decision, WTW-30-26).
+                        if (m_spell) m_profile.HealsHp = true;
                         break;
                     case ContextActionApplyBuff apply:
                         ReadSuppressors(apply.Buff, gate);
