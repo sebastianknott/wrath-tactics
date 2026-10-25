@@ -54,6 +54,7 @@ namespace WrathTactics.Engine {
     internal static class CleanseSelector {
         internal const string NoMatch = "no-match";
         internal const string Latched = "latched";
+        internal const string Hopeless = "hopeless";
 
         internal static CleanseVerdict Select(IReadOnlyList<CleanseOptionInput> options, CleanseSituation s) {
             var result = new CleanseVerdict { Wanted = s.AllyMask & s.RuleKinds };
@@ -74,7 +75,12 @@ namespace WrathTactics.Engine {
                     result.Rejected.Add(o.Name + " (" + Latched + ")");
                     continue;
                 }
-                candidates.Add(Candidate(o, s, free, out var covered));
+                var candidate = Candidate(o, s, free, out var covered);
+                if (candidate.ExpectedSteps == 0) {
+                    result.Rejected.Add(o.Name + " (" + Hopeless + ")");
+                    continue;
+                }
+                candidates.Add(candidate);
                 coverage.Add(covered);
                 indexes.Add(i);
             }

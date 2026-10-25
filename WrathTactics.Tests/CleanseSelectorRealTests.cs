@@ -10,6 +10,7 @@ using Xunit;
 
 namespace WrathTactics.Tests {
     // PM decisions a and b of WTW-30 cleanse WP3c, checked against the game's real blueprints (skipped when absent).
+    [Collection("CleanseLatch")]
     public class CleanseSelectorRealTests {
         const string SlowBuff = "0bc608c3f2b548b44b7146b7530613ac";
         const string BaneBuff = "9277a66b27a849145a0ff5e8513c7921";

@@ -300,12 +300,14 @@ namespace WrathTactics.Tests {
             var checks = new SortedDictionary<string, int>();
             var suspicious = new List<string>();
             var unloadable = new List<string>();
+            var damageExcluded = new List<string>();
             int total = 0, cleanses = 0;
             foreach (var path in RealBlueprints.PathsOfType("BlueprintAbility")) {
                 BlueprintAbility bp;
                 try { bp = RealBlueprints.ByPath<BlueprintAbility>(path); } catch (Exception) { unloadable.Add(path); continue; }
                 total++;
-                var p = CleanseClassifier.ReadUncached(bp);
+                var p = CleanseClassifier.ReadUncached(bp, out var excludedForDamage);
+                if (excludedForDamage) damageExcluded.Add(System.IO.Path.GetFileNameWithoutExtension(path) + " <" + DamageConditions(bp) + ">");
                 var again = CleanseClassifier.Get(bp);
                 Assert.Equal(p.IsCleanse, again.IsCleanse);
                 if (!p.IsCleanse) continue;
@@ -328,6 +330,8 @@ namespace WrathTactics.Tests {
             m_out.WriteLine("tier 0/1/2: " + string.Join(", ", tiers.Select(kv => kv.Key + "=" + kv.Value)));
             m_out.WriteLine("kinds covered (abilities): " + string.Join(", ", kindCounts.Select(kv => kv.Key + "=" + kv.Value)));
             m_out.WriteLine("effects by check: " + string.Join(", ", checks.Select(kv => kv.Key + "=" + kv.Value)));
+            m_out.WriteLine("excluded by the ally-branch damage rule (" + damageExcluded.Count + "):");
+            foreach (var d in damageExcluded) m_out.WriteLine("  damage-excluded: " + d);
             foreach (var s in suspicious) m_out.WriteLine("  suspicious: " + s);
             foreach (var u in unloadable.Take(20)) m_out.WriteLine("  unloadable: " + u);
             Assert.True(total > 3000, "abilities loaded: " + total);
@@ -356,6 +360,31 @@ namespace WrathTactics.Tests {
             }).ToList();
             foreach (var u in hidden) m_out.WriteLine("UNLOADABLE cure-like: " + u);
             Assert.Empty(hidden);
+        }
+
+        // Condition types guarding the damage actions, for the reviewer's list (diagnostic only).
+        static string DamageConditions(BlueprintAbility bp) {
+            var found = new SortedSet<string>();
+            var run = bp.ComponentsArray.OfType<Kingmaker.UnitLogic.Abilities.Components.AbilityEffectRunAction>().FirstOrDefault();
+            if (run != null) CollectDamageGuards(run.Actions, "", found);
+            return string.Join(" | ", found);
+        }
+
+        static void CollectDamageGuards(Kingmaker.ElementsSystem.ActionList list, string guard, SortedSet<string> found) {
+            if (list?.Actions == null) return;
+            foreach (var a in list.Actions) {
+                if (a is Kingmaker.UnitLogic.Mechanics.Actions.ContextActionDealDamage) found.Add(guard == "" ? "unguarded" : guard);
+                var c = a as Kingmaker.Designers.EventConditionActionSystem.Actions.Conditional;
+                if (c != null) {
+                    var names = string.Join("+", (c.ConditionsChecker?.Conditions ?? new Kingmaker.ElementsSystem.Condition[0]).Select(x => x.GetType().Name));
+                    CollectDamageGuards(c.IfTrue, guard + "T:" + names + ";", found);
+                    CollectDamageGuards(c.IfFalse, guard + "F:" + names + ";", found);
+                }
+                var st = a as Kingmaker.UnitLogic.Mechanics.Actions.ContextActionSavingThrow;
+                if (st != null) CollectDamageGuards(st.Actions, guard, found);
+                var cs = a as Kingmaker.UnitLogic.Mechanics.Actions.ContextActionConditionalSaved;
+                if (cs != null) { CollectDamageGuards(cs.Failed, guard, found); CollectDamageGuards(cs.Succeed, guard, found); }
+            }
         }
 
         static bool DealsDamage(BlueprintAbility bp) {
