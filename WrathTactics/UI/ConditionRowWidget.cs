@@ -150,7 +150,8 @@ namespace WrathTactics.UI {
                     || condition.Property == ConditionProperty.ABMinusAC
                     || condition.Property == ConditionProperty.EnemyHDMinusPartyLevel
                     || condition.Property == ConditionProperty.WithinRange
-                    || condition.Property == ConditionProperty.EngagedEnemyCount;
+                    || condition.Property == ConditionProperty.EngagedEnemyCount
+                    || condition.Property == ConditionProperty.AdjacentEnemyCount;
 
                 if (propNeedsOperator) {
                     // Operator selector where the "<" label was
