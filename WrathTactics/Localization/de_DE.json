@@ -223,6 +223,7 @@
   "enum.property.WieldsRangedWeapon": "Führt Fernkampfwaffe",
   "enum.property.IsDowned": "Gefallen",
   "enum.property.IsFlanked": "Wird flankiert",
+  "enum.property.IsVisible": "Ist sichtbar",
   "enum.property.AbilityDamage": "Attributsschaden",
   "enum.property.NegativeLevels": "Negative Stufen",
   "enum.property.AdjacentEnemyCount": "Gegner angrenzend",
@@ -345,6 +346,8 @@
   "enum.condition.Helpless": "Hilflos",
   "enum.condition.Cowering": "Kauernd",
   "enum.condition.DeathDoor": "Todesnähe",
+  "enum.condition.Dominated": "Beherrscht",
+  "enum.condition.Charmed": "Bezaubert",
 
   "enum.descriptor.Poison": "Gift",
   "enum.descriptor.Disease": "Krankheit",
