@@ -65,11 +65,16 @@ namespace WrathTactics.Engine {
             return Mask(readings, conditions);
         }
 
-        static bool IsProtective(BlueprintBuff bp) {
-            if (bp.ComponentsArray == null) return false;
-            foreach (var comp in bp.ComponentsArray)
-                if (comp is AddConditionImmunity || comp is BuffDescriptorImmunity || comp is SuppressBuffs) return true;
-            return false;
+        /// <summary>
+        /// A buff is protective when it carries immunity/suppression components AND everything harmful it carries is
+        /// what those components protect against (Freedom of Movement marks MovementImpairing and is immune to it).
+        /// A buff whose harm is not covered by its own immunities is an affliction even with an immunity attached:
+        /// the Blindness spell buff also grants an immunity to an unrelated descriptor, yet blinds.
+        /// </summary>
+        internal static bool IsProtective(BlueprintBuff bp) {
+            var protectedKinds = CleanseTable.ProtectedKinds(bp);
+            if (protectedKinds == AfflictionKinds.None) return false;
+            return (CleanseTable.KindsOfBuff(bp) & ~protectedKinds) == AfflictionKinds.None;
         }
 
         /// <summary>

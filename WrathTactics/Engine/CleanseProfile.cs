@@ -16,6 +16,8 @@ namespace WrathTactics.Engine {
         public int MaxCasterLevel;
         /// <summary>Caster must carry all of these facts (exact GUIDs) for the effect to apply, e.g. a Lay on Hands mercy. Empty = always.</summary>
         public string[] GateFacts = new string[0];
+        /// <summary>Caster must carry none of these facts (a negated caster-fact condition). Empty = no restriction.</summary>
+        public string[] ForbiddenFacts = new string[0];
     }
 
     /// <summary>
@@ -70,9 +72,9 @@ namespace WrathTactics.Engine {
         }
 
         static bool Active(CleanseEffect e, Func<string, bool> hasFact) {
-            if (e.GateFacts.Length == 0) return true;
-            if (hasFact == null) return false;
+            if (hasFact == null) return e.GateFacts.Length == 0;
             foreach (var f in e.GateFacts) if (!hasFact(f)) return false;
+            foreach (var f in e.ForbiddenFacts) if (hasFact(f)) return false;
             return true;
         }
 
