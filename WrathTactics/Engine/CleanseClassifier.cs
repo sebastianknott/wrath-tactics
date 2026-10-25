@@ -42,7 +42,7 @@ namespace WrathTactics.Engine {
             if (s_cache.TryGetValue(bp, out var cached)) return cached;
             CleanseProfile profile;
             try {
-                profile = new Reader().Read(bp);
+                profile = ReadUncached(bp);
             } catch (Exception ex) {
                 // Blueprint init guard: one malformed blueprint must not take the tick down. Cached as a
                 // non-cleanse so it is not re-read every tick.
@@ -51,6 +51,27 @@ namespace WrathTactics.Engine {
             }
             s_cache[bp] = profile;
             return profile;
+        }
+
+        /// <summary>The reading itself, without cache and without the failure guard (tests surface exceptions).</summary>
+        internal static CleanseProfile ReadUncached(BlueprintAbility bp) { return new Reader().Read(bp); }
+
+        /// <summary>
+        /// Caster facts an effect hangs on: all of <see cref="Required"/> held and none of <see cref="Forbidden"/>.
+        /// </summary>
+        sealed class Gate {
+            public static readonly Gate None = new Gate(new string[0], new string[0]);
+            public readonly string[] Required;
+            public readonly string[] Forbidden;
+            public Gate(string[] required, string[] forbidden) { Required = required; Forbidden = forbidden; }
+            public Gate And(Gate other) { return other == null ? this : new Gate(Concat(Required, other.Required), Concat(Forbidden, other.Forbidden)); }
+        }
+
+        static string[] Concat(string[] a, string[] b) {
+            var r = new string[a.Length + b.Length];
+            a.CopyTo(r, 0);
+            b.CopyTo(r, a.Length);
+            return r;
         }
 
         /// <summary>True for the ability type whose HP heals count as the tier-2 last resort: spells only.</summary>
@@ -65,8 +86,6 @@ namespace WrathTactics.Engine {
 
         sealed class Reader {
             readonly CleanseProfile m_profile = new CleanseProfile();
-            static readonly string[] NoGate = new string[0];
-
             bool m_spell;
 
             public CleanseProfile Read(BlueprintAbility bp) {
@@ -79,20 +98,22 @@ namespace WrathTactics.Engine {
 
             void ReadEffects(BlueprintAbility bp) {
                 var run = Find<AbilityEffectRunAction>(bp);
-                if (run != null) WalkList(run.Actions, NoGate);
+                if (run != null) WalkList(run.Actions, Gate.None);
             }
 
-            void WalkList(ActionList list, string[] gate) {
+            void WalkList(ActionList list, Gate gate) {
                 if (list?.Actions == null) return;
                 foreach (var a in list.Actions) WalkAction(a, gate);
             }
 
-            void WalkAction(GameAction action, string[] gate) {
+            void WalkAction(GameAction action, Gate gate) {
                 switch (action) {
                     case Conditional c: {
-                        var facts = CasterFactGate(c.ConditionsChecker);
-                        WalkList(c.IfTrue, facts == null ? gate : Concat(gate, facts));
-                        WalkList(c.IfFalse, gate);
+                        // Heal-vs-damage flip on the target's NegativeEnergyAffinity (undead): only the branch a
+                        // living ally takes is read (Heal heals them; Harm hurts them, its cure is for undead).
+                        bool? livingBranch = LivingBranch(c.ConditionsChecker);
+                        if (livingBranch != false) WalkList(c.IfTrue, gate.And(CasterFactGate(c.ConditionsChecker)));
+                        if (livingBranch != true) WalkList(c.IfFalse, gate);
                         break;
                     }
                     case ContextActionSavingThrow st:
@@ -132,30 +153,36 @@ namespace WrathTactics.Engine {
                 }
             }
 
-            // Only a checker made of positive CasterHasFact conditions joined by AND is understood; anything
-            // else is walked ungated (like DebuffClassifier does for unknown conditions).
-            static string[] CasterFactGate(ConditionsChecker checker) {
+            // For a lone "target has NegativeEnergyAffinity" check: true when the living-ally branch is IfTrue
+            // (negated check), false when it is IfFalse; null for any other checker.
+            static bool? LivingBranch(ConditionsChecker checker) {
                 var conditions = checker?.Conditions;
-                if (conditions == null || conditions.Length == 0 || checker.Operation != Operation.And) return null;
-                var facts = new List<string>();
-                foreach (var cond in conditions) {
-                    var has = cond as ContextConditionCasterHasFact;
-                    if (has == null || has.Not || has.Fact == null) return null;
-                    facts.Add(has.Fact.AssetGuid.ToString());
-                }
-                return facts.ToArray();
+                if (conditions == null || conditions.Length != 1) return null;
+                var has = conditions[0] as ContextConditionHasFact;
+                if (has?.Fact == null || has.Fact.AssetGuid.ToString() != ActionValidator.NegativeEnergyAffinityGuid) return null;
+                return has.Not;
             }
 
-            static string[] Concat(string[] a, string[] b) {
-                var r = new string[a.Length + b.Length];
-                a.CopyTo(r, 0);
-                b.CopyTo(r, a.Length);
-                return r;
+            // Only a checker made of CasterHasFact conditions joined by AND is understood: a positive one requires the
+            // fact, a negated one (Not) forbids it. Anything else is walked ungated (like DebuffClassifier does for
+            // unknown conditions). Lay on Hands: "caster has MercyPoisoned" gates the poison cure; the Martyr's
+            // mercies additionally say "and has no <suppress> buff".
+            static Gate CasterFactGate(ConditionsChecker checker) {
+                var conditions = checker?.Conditions;
+                if (conditions == null || conditions.Length == 0 || checker.Operation != Operation.And) return null;
+                var required = new List<string>();
+                var forbidden = new List<string>();
+                foreach (var cond in conditions) {
+                    var has = cond as ContextConditionCasterHasFact;
+                    if (has == null || has.Fact == null) return null;
+                    (has.Not ? forbidden : required).Add(has.Fact.AssetGuid.ToString());
+                }
+                return new Gate(required.ToArray(), forbidden.ToArray());
             }
 
             // A dispel with an empty descriptor is a plain Dispel Magic (schools only): not a cleanse.
             // CheckBonus/ContextBonus are ignored (unverified, rare); the cap is read only when it is a constant.
-            void AddDispel(ContextActionDispelMagic d, string[] gate) {
+            void AddDispel(ContextActionDispelMagic d, Gate gate) {
                 var kinds = CleanseTable.KindsFromDescriptor((SpellDescriptor)d.Descriptor);
                 if (kinds == AfflictionKinds.None) return;
                 int cap = 0;
@@ -164,33 +191,22 @@ namespace WrathTactics.Engine {
                     cap = d.m_MaxCasterLevel.Value;
                 m_profile.Add(new CleanseEffect {
                     Kinds = kinds, Check = (CleanseCheckType)(int)d.m_CheckType, Skill = d.m_Skill,
-                    MaxCasterLevel = cap, GateFacts = gate,
+                    MaxCasterLevel = cap, GateFacts = gate.Required, ForbiddenFacts = gate.Forbidden,
                 });
             }
 
-            void AddRemoval(AfflictionKinds kinds, string[] gate) {
-                m_profile.Add(new CleanseEffect { Kinds = kinds, GateFacts = gate });
+            void AddRemoval(AfflictionKinds kinds, Gate gate) {
+                m_profile.Add(new CleanseEffect { Kinds = kinds, GateFacts = gate.Required, ForbiddenFacts = gate.Forbidden });
             }
 
-            void ReadSuppressors(BlueprintBuff buff, string[] gate) {
+            void ReadSuppressors(BlueprintBuff buff, Gate gate) {
                 if (buff?.ComponentsArray == null) return;
                 foreach (var comp in buff.ComponentsArray) {
-                    var kinds = AfflictionKinds.None;
-                    switch (comp) {
-                        case SuppressBuffs sup:
-                            kinds = CleanseTable.KindsFromDescriptor((SpellDescriptor)sup.Descriptor);
-                            if (sup.m_Buffs != null)
-                                foreach (var r in sup.m_Buffs) kinds |= CleanseTable.KindsOfBuff(r?.Get());
-                            break;
-                        case BuffDescriptorImmunity imm:
-                            kinds = CleanseTable.KindsFromDescriptor((SpellDescriptor)imm.Descriptor);
-                            break;
-                        case AddConditionImmunity cond:
-                            kinds = CleanseTable.KindsFromCondition(cond.Condition);
-                            break;
-                    }
+                    var kinds = CleanseTable.ProtectedKinds(comp);
                     if (kinds != AfflictionKinds.None)
-                        m_profile.Add(new CleanseEffect { Kinds = kinds, Suppress = true, GateFacts = gate });
+                        m_profile.Add(new CleanseEffect {
+                            Kinds = kinds, Suppress = true, GateFacts = gate.Required, ForbiddenFacts = gate.Forbidden,
+                        });
                 }
             }
         }
