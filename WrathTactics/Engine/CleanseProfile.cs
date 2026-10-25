@@ -18,6 +18,12 @@ namespace WrathTactics.Engine {
         public string[] GateFacts = new string[0];
         /// <summary>Caster must carry none of these facts (a negated caster-fact condition). Empty = no restriction.</summary>
         public string[] ForbiddenFacts = new string[0];
+        /// <summary>
+        /// Exact blueprint GUIDs of the buffs this effect strips (ContextActionRemoveBuff*), empty for descriptor-based
+        /// removal. Such an effect only helps an ally that really carries one of these buffs: Haste removes Slow, Bless
+        /// removes Bane, and neither cures an ally who is merely dazed or shaken from another source.
+        /// </summary>
+        public string[] RemovedBuffGuids = new string[0];
     }
 
     /// <summary>
@@ -58,12 +64,27 @@ namespace WrathTactics.Engine {
         /// (None first), then declaration order. Null when nothing covers it.
         /// </summary>
         public CleanseEffect EffectFor(AfflictionKinds kind, Func<string, bool> hasFact) {
+            return EffectFor(kind, hasFact, null);
+        }
+
+        /// <summary>
+        /// As <see cref="EffectFor(AfflictionKinds, Func{string, bool})"/> for one concrete ally: an effect that strips
+        /// specific buffs (<see cref="CleanseEffect.RemovedBuffGuids"/>) only counts when <paramref name="allyHasBuff"/>
+        /// confirms the ally carries one of them. Null = no ally given, the restriction is not applied.
+        /// </summary>
+        public CleanseEffect EffectFor(AfflictionKinds kind, Func<string, bool> hasFact, Func<string, bool> allyHasBuff) {
             CleanseEffect best = null;
             foreach (var e in Effects) {
-                if ((e.Kinds & kind) == 0 || !Active(e, hasFact)) continue;
+                if ((e.Kinds & kind) == 0 || !Active(e, hasFact) || !AllyHasRemovedBuff(e, allyHasBuff)) continue;
                 if (best == null || Better(e, best)) best = e;
             }
             return best;
+        }
+
+        static bool AllyHasRemovedBuff(CleanseEffect e, Func<string, bool> allyHasBuff) {
+            if (allyHasBuff == null || e.RemovedBuffGuids.Length == 0) return true;
+            foreach (var g in e.RemovedBuffGuids) if (allyHasBuff(g)) return true;
+            return false;
         }
 
         static bool Better(CleanseEffect e, CleanseEffect best) {
