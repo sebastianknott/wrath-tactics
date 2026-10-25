@@ -217,6 +217,7 @@
   "enum.property.HasDescriptorEffect": "Affecté par",
   "enum.property.ImmuneToEnergy": "Immunisé à l'énergie",
   "enum.property.EnemyHDMinusPartyLevel": "DV − GroupeMax",
+  "enum.property.EnemyHDMinusPartyMedian": "DV − GroupeMédiane",
 
   "enum.action.CastSpell": "Lancer un sort",
   "enum.action.CastAbility": "Capacité",

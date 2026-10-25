@@ -217,6 +217,7 @@
   "enum.property.HasDescriptorEffect": "Подвержен",
   "enum.property.ImmuneToEnergy": "Иммунитет к энергии",
   "enum.property.EnemyHDMinusPartyLevel": "КЗ − МаксГруппы",
+  "enum.property.EnemyHDMinusPartyMedian": "КЗ − МедианаГруппы",
 
   "enum.action.CastSpell": "Заклинание",
   "enum.action.CastAbility": "Способность",

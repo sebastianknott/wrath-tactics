@@ -145,6 +145,7 @@ namespace WrathTactics.UI {
                     || condition.Property == ConditionProperty.SpellDCMinusSave
                     || condition.Property == ConditionProperty.ABMinusAC
                     || condition.Property == ConditionProperty.EnemyHDMinusPartyLevel
+                    || condition.Property == ConditionProperty.EnemyHDMinusPartyMedian
                     || condition.Property == ConditionProperty.WithinRange;
 
                 if (propNeedsOperator) {
@@ -607,6 +608,7 @@ namespace WrathTactics.UI {
                         ConditionProperty.SpellDCMinusSave,
                         ConditionProperty.ABMinusAC,
                         ConditionProperty.EnemyHDMinusPartyLevel,
+                        ConditionProperty.EnemyHDMinusPartyMedian,
                         ConditionProperty.HasClass,
                         ConditionProperty.WithinRange,
                         ConditionProperty.IsTargetingSelf,
@@ -629,6 +631,7 @@ namespace WrathTactics.UI {
                         ConditionProperty.SpellDCMinusSave,
                         ConditionProperty.ABMinusAC,
                         ConditionProperty.EnemyHDMinusPartyLevel,
+                        ConditionProperty.EnemyHDMinusPartyMedian,
                         ConditionProperty.HasClass,
                         ConditionProperty.WithinRange,
                         ConditionProperty.IsSummon,
