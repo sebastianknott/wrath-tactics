@@ -3,6 +3,7 @@ using WrathTactics.Models;
 using Xunit;
 
 namespace WrathTactics.Tests {
+    [Collection("CleanseLatch")]
     public class CleanseLatchTests {
         public CleanseLatchTests() { CleanseAttemptLatch.Clear(); }
 
@@ -33,7 +34,22 @@ namespace WrathTactics.Tests {
         [Fact]
         public void Other_remedy_not_blocked() {
             CleanseAttemptLatch.Record("ally", AfflictionKinds.Poison, "remedy", 100, inCombat: true);
-            Assert.False(CleanseAttemptLatch.IsBlocked("ally", AfflictionKinds.Poison, "other", 101));
+            Assert.False(CleanseAttemptLatch.IsBlocked("ally", AfflictionKinds.Poison, "other", 102));
+        }
+
+        [Fact]
+        public void Other_remedy_blocked_during_grace() {
+            CleanseAttemptLatch.Record("ally", AfflictionKinds.Poison, "remedy", 100, inCombat: true);
+            Assert.True(CleanseAttemptLatch.IsBlocked("ally", AfflictionKinds.Poison, "other", 101.9));
+            Assert.False(CleanseAttemptLatch.IsBlocked("ally", AfflictionKinds.Poison, "other", 102));
+            Assert.Equal(2.0, CleanseAttemptLatch.GraceSeconds);
+        }
+
+        [Fact]
+        public void Grace_is_per_ally_and_kind() {
+            CleanseAttemptLatch.Record("ally", AfflictionKinds.Poison, "remedy", 100, inCombat: true);
+            Assert.False(CleanseAttemptLatch.IsBlocked("buddy", AfflictionKinds.Poison, "other", 101));
+            Assert.False(CleanseAttemptLatch.IsBlocked("ally", AfflictionKinds.Curse, "other", 101));
         }
 
         [Fact]

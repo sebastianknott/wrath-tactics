@@ -7,6 +7,7 @@ using Xunit;
 
 namespace WrathTactics.Tests {
     // Cleanse selector over synthetic remedy lists (WTW-30): coverage, ranking, latch fall-through, Heal last.
+    [Collection("CleanseLatch")]
     public class CleanseSelectorTests {
         const AfflictionKinds Poison = AfflictionKinds.Poison, Curse = AfflictionKinds.Curse,
             Disease = AfflictionKinds.Disease, Paralysis = AfflictionKinds.Paralysis, Stat = AfflictionKinds.StatDebuffAbilityDamage;
@@ -31,6 +32,16 @@ namespace WrathTactics.Tests {
         }
 
         static string KeyOf(CleanseVerdict s, params CleanseOptionInput[] options) { return options[s.Index].Key; }
+
+        [Fact]
+        public void Hopeless_remedy_is_rejected_with_a_reason() {
+            var dud = Opt("dud", Profile(Dice(Poison)), chance: 0.0);
+            var ok = Opt("ok", Profile(Dice(Poison)), grade: 5, chance: 0.5);
+            var only = CleanseSelector.Select(new[] { dud }, Sit(Poison));
+            Assert.Equal(-1, only.Index);
+            Assert.Contains(only.Rejected, r => r.Contains("dud") && r.Contains("hopeless"));
+            Assert.Equal("ok", KeyOf(CleanseSelector.Select(new[] { dud, ok }, Sit(Poison)), dud, ok));
+        }
 
         [Fact]
         public void Nothing_to_cure_selects_nothing() {
@@ -139,7 +150,7 @@ namespace WrathTactics.Tests {
             var best = Opt("best", Profile(Dice(Poison)), grade: 1, chance: 0.9);
             var other = Opt("other", Profile(Sure(Poison)), grade: 3);
             var situation = Sit(Poison);
-            CleanseAttemptLatch.Record(situation.AllyId, Poison, "best", situation.NowSeconds - 1, inCombat: true);
+            CleanseAttemptLatch.Record(situation.AllyId, Poison, "best", situation.NowSeconds - 3, inCombat: true);
             var s = CleanseSelector.Select(new[] { best, other }, situation);
             Assert.Equal("other", KeyOf(s, best, other));
             Assert.Contains(s.Rejected, r => r.Contains("best") && r.Contains("latched"));
