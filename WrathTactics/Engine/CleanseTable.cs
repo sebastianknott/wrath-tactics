@@ -13,13 +13,16 @@ namespace WrathTactics.Engine {
     /// Hand table (WTW-30 cleanse): which game spell descriptors and unit conditions make up each
     /// AfflictionKinds bit. Exact enum members only, never name matching. Polymorph, Charm, Sleep and the
     /// other descriptors that are not in the table map to None, so a buff carrying only those is not harmful.
+    /// Staggered is its own kind (WTW-30 F1): the stun/daze removers (Heal) do not lift a stagger, so folding it into
+    /// StunDaze made them count as remedies that never worked.
     /// </summary>
     internal static class CleanseTable {
         internal static AfflictionKinds KindsFromDescriptor(SpellDescriptor d) {
             var k = AfflictionKinds.None;
             if ((d & SpellDescriptor.Paralysis) != 0) k |= AfflictionKinds.Paralysis;
             if ((d & SpellDescriptor.Confusion) != 0) k |= AfflictionKinds.Confusion;
-            if ((d & (SpellDescriptor.Stun | SpellDescriptor.Daze | SpellDescriptor.Staggered)) != 0) k |= AfflictionKinds.StunDaze;
+            if ((d & (SpellDescriptor.Stun | SpellDescriptor.Daze)) != 0) k |= AfflictionKinds.StunDaze;
+            if ((d & SpellDescriptor.Staggered) != 0) k |= AfflictionKinds.Staggered;
             if ((d & (SpellDescriptor.Fear | SpellDescriptor.Shaken | SpellDescriptor.Frightened)) != 0) k |= AfflictionKinds.FearShaken;
             if ((d & (SpellDescriptor.Nauseated | SpellDescriptor.Sickened)) != 0) k |= AfflictionKinds.NauseaSickened;
             if ((d & SpellDescriptor.Blindness) != 0) k |= AfflictionKinds.Blindness;
@@ -39,8 +42,8 @@ namespace WrathTactics.Engine {
                 case UnitCondition.Paralyzed: return AfflictionKinds.Paralysis;
                 case UnitCondition.Confusion: return AfflictionKinds.Confusion;
                 case UnitCondition.Stunned:
-                case UnitCondition.Dazed:
-                case UnitCondition.Staggered: return AfflictionKinds.StunDaze;
+                case UnitCondition.Dazed: return AfflictionKinds.StunDaze;
+                case UnitCondition.Staggered: return AfflictionKinds.Staggered;
                 case UnitCondition.Shaken:
                 case UnitCondition.Frightened:
                 case UnitCondition.Cowering: return AfflictionKinds.FearShaken;

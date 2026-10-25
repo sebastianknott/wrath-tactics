@@ -229,6 +229,7 @@
   "enum.affliction.NegativeLevel": "负等级",
   "enum.affliction.Petrified": "石化",
   "enum.affliction.SlowedEntangled": "减速 / 缠绕",
+  "enum.affliction.Staggered": "蹒跚",
   "enum.property.HasClass": "拥有职业",
   "enum.property.WithinRange": "在范围内",
   "enum.property.ABMinusAC": "命中余量 (AB − AC)",

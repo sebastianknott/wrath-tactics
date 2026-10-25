@@ -28,9 +28,25 @@ namespace WrathTactics.Tests {
             };
         }
 
-        const AfflictionKinds ConditionAll = (AfflictionKinds)((1 << 14) - 1);
+        const AfflictionKinds ConditionAll = (AfflictionKinds)((1 << 15) - 1);
 
         // ---- decision a: counter-removal over-coverage ----
+
+        // ---- WTW-30 F1: a staggered-only ally ----
+
+        [RealBlueprintFact]
+        public void Heal_is_not_chosen_for_a_staggered_only_ally() {
+            var heal = Input("heal", Ability("Spells/Level6/Heal"));
+            var r = CleanseSelector.Select(new[] { heal }, Sit(AfflictionKinds.Staggered));
+            Assert.Equal(-1, r.Index);
+        }
+
+        [RealBlueprintFact]
+        public void Freedom_of_movement_is_chosen_for_a_staggered_only_ally_but_not_for_a_dazed_one() {
+            var fom = Input("fom", Ability("Spells/Level4/FreedomOfMovement"));
+            Assert.Equal(0, CleanseSelector.Select(new[] { fom }, Sit(AfflictionKinds.Staggered)).Index);
+            Assert.Equal(-1, CleanseSelector.Select(new[] { fom }, Sit(AfflictionKinds.StunDaze)).Index);
+        }
 
         [RealBlueprintFact]
         public void Haste_records_the_exact_slow_buff_it_removes() {

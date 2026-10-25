@@ -165,7 +165,7 @@ The **Remove condition** action cures afflictions on an ally with whatever the c
 2. **Action**: pick *Remove condition* and tick the kinds the rule may cure. All kinds are ticked when you pick the action. A rule with no kind ticked never fires.
 3. **Target**: keep *condition target*, so the cure goes to the ally that matched.
 
-Kinds: paralysis, confusion, stunned / dazed, fear / shaken, nauseated / sickened, blindness, poison, disease, curse, fatigued / exhausted, stat penalty / ability damage, negative level, petrified, slowed / entangled.
+Kinds: paralysis, confusion, stunned / dazed, fear / shaken, nauseated / sickened, blindness, poison, disease, curse, fatigued / exhausted, stat penalty / ability damage, negative level, petrified, slowed / entangled, staggered (own kind: Heal does not lift it; Freedom of Movement, Haste against Slow and the Staggered mercy do).
 
 How the remedy is picked:
 
@@ -236,7 +236,7 @@ Every term in the rule editor, in UI order. All checks are **snapshots**: a cond
 | **HitDice** | number | Hit dice (character level without mythic ranks). |
 | **HasBuff** | buff | The unit carries exactly that buff (picked from the buff list). `!=` means "is missing it". |
 | **HasCondition** | condition | The unit has that game condition (Paralyzed, Stunned, Frightened, Nauseated, Confused, Blinded, Prone, Entangled, Exhausted, Fatigued, Shaken, Sickened, Sleeping, Petrified, Slowed, Staggered, Dazed, Dazzled, Helpless, Cowering, Death's Door). |
-| **HasAffliction** | affliction kind | Self and ally subjects. The unit carries a harmful effect of the chosen kind (*Any affliction* = any of the 14 kinds: paralysis, confusion, stunned / dazed, fear / shaken, nauseated / sickened, blindness, poison, disease, curse, fatigued / exhausted, stat penalty / ability damage, negative level, petrified, slowed / entangled). `=` is true when the unit has any chosen kind. Effects you cast yourself, effects from allies, polymorph and protective buffs do not count. Pair it with the **Remove condition** action; see [Removing conditions](#removing-conditions-cleanse). |
+| **HasAffliction** | affliction kind | Self and ally subjects. The unit carries a harmful effect of the chosen kind (*Any affliction* = any of the 15 kinds: paralysis, confusion, stunned / dazed, fear / shaken, nauseated / sickened, blindness, poison, disease, curse, fatigued / exhausted, stat penalty / ability damage, negative level, petrified, slowed / entangled, staggered). `=` is true when the unit has any chosen kind. Effects you cast yourself, effects from allies, polymorph and protective buffs do not count. Pair it with the **Remove condition** action; see [Removing conditions](#removing-conditions-cleanse). |
 | **Affected by** | Poison / Disease / Bleed | Any active effect of that kind, no matter which spell or monster caused it. |
 | **Immune to energy** | Fire / Cold / Electricity / Acid / Sonic | The unit is fully immune to that energy type. |
 | **CreatureType** | type | Aberration, Animal, Construct, Dragon, Fey, Humanoid, Magical Beast, Monstrous Humanoid, Ooze, Outsider, Plant, Swarm, Undead, Vermin, Incorporeal. Uses the same type facts the game's own spells use; "Humanoid" means "none of the other types". |

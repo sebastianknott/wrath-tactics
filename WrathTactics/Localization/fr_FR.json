@@ -229,6 +229,7 @@
   "enum.affliction.NegativeLevel": "Niveau négatif",
   "enum.affliction.Petrified": "Pétrifié",
   "enum.affliction.SlowedEntangled": "Ralenti / entravé",
+  "enum.affliction.Staggered": "Chancelant",
   "enum.property.HasClass": "A classe",
   "enum.property.WithinRange": "À portée",
   "enum.property.ABMinusAC": "Marge de touche (BAB − CA)",

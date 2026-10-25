@@ -78,7 +78,16 @@ namespace WrathTactics.Engine {
             var conditions = AfflictionKinds.None;
             foreach (var pair in s_conditionKinds)
                 if (unit.State.HasCondition(pair.Key)) conditions |= pair.Value;
-            return Mask(readings, conditions);
+            var mask = Mask(readings, conditions);
+            return ConfirmStagger(mask, unit.State.HasCondition(UnitCondition.Staggered));
+        }
+
+        /// <summary>
+        /// Drops the Staggered bit when the unit is not staggered right now. A buff keeps its Staggered descriptor
+        /// while condition immunity (Freedom of Movement) switches the condition off, so the buff alone is no proof.
+        /// </summary>
+        internal static AfflictionKinds ConfirmStagger(AfflictionKinds mask, bool staggeredNow) {
+            return staggeredNow ? mask : mask & ~AfflictionKinds.Staggered;
         }
 
         internal static List<BuffReading> ReadBuffs(UnitEntityData unit) {

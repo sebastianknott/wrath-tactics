@@ -67,6 +67,7 @@ namespace WrathTactics.Localization {
         public static List<string> KeysForAffliction() => new List<string> {
             "Any", "Paralysis", "Confusion", "StunDaze", "FearShaken", "NauseaSickened", "Blindness", "Poison",
             "Disease", "Curse", "FatigueExhausted", "StatDebuffAbilityDamage", "NegativeLevel", "Petrified", "SlowedEntangled",
+            "Staggered",
         };
 
         public static List<string> LabelsForAffliction() => Map(KeysForAffliction(), k => $"enum.affliction.{k}".i18n());
