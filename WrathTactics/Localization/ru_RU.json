@@ -223,6 +223,7 @@
   "enum.property.WieldsRangedWeapon": "Дальнобойное оружие",
   "enum.property.IsDowned": "Повержен",
   "enum.property.IsFlanked": "Окружён (атакован с двух сторон)",
+  "enum.property.IsVisible": "Виден",
   "enum.property.AbilityDamage": "Урон характеристик",
   "enum.property.NegativeLevels": "Отрицательные уровни",
   "enum.property.AdjacentEnemyCount": "Соседних врагов",
@@ -345,6 +346,8 @@
   "enum.condition.Helpless": "Беспомощен",
   "enum.condition.Cowering": "Скован страхом",
   "enum.condition.DeathDoor": "На пороге смерти",
+  "enum.condition.Dominated": "Подчинён",
+  "enum.condition.Charmed": "Очарован",
 
   "enum.descriptor.Poison": "Яд",
   "enum.descriptor.Disease": "Болезнь",

@@ -223,6 +223,7 @@
   "enum.property.WieldsRangedWeapon": "Wields ranged weapon",
   "enum.property.IsDowned": "Downed",
   "enum.property.IsFlanked": "Is flanked",
+  "enum.property.IsVisible": "Is visible",
   "enum.property.AbilityDamage": "Ability damage",
   "enum.property.NegativeLevels": "Negative levels",
   "enum.property.AdjacentEnemyCount": "Enemies adjacent",
@@ -345,6 +346,8 @@
   "enum.condition.Helpless": "Helpless",
   "enum.condition.Cowering": "Cowering",
   "enum.condition.DeathDoor": "Death's Door",
+  "enum.condition.Dominated": "Dominated",
+  "enum.condition.Charmed": "Charmed",
 
   "enum.descriptor.Poison": "Poison",
   "enum.descriptor.Disease": "Disease",
