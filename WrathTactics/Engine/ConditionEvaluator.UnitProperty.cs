@@ -300,13 +300,7 @@ namespace WrathTactics.Engine {
                     // the evaluated unit. Re-uses RangeBrackets.Melee for consistency with
                     // the WithinRange property.
                     if (CurrentOwner == null) return false;
-                    float meleeRange = RangeBrackets.MaxMeters(RangeBracket.Melee);
-                    int count = 0;
-                    foreach (var e in GetVisibleEnemies(CurrentOwner)) {
-                        if (Vector3.Distance(unit.Position, e.Position) <= meleeRange)
-                            count++;
-                    }
-                    return CompareFloat(count, condition.Operator, threshold);
+                    return CompareFloat(CountAdjacentEnemies(unit), condition.Operator, threshold);
                 }
 
                 case ConditionProperty.EngagedEnemyCount: {
@@ -509,13 +503,7 @@ namespace WrathTactics.Engine {
                     if (!float.TryParse(condition.Value, System.Globalization.NumberStyles.Any,
                         System.Globalization.CultureInfo.InvariantCulture, out threshold))
                         return false;
-                    float meleeRange = RangeBrackets.MaxMeters(RangeBracket.Melee);
-                    int count = 0;
-                    foreach (var e in GetVisibleEnemies(CurrentOwner)) {
-                        if (Vector3.Distance(unit.Position, e.Position) <= meleeRange)
-                            count++;
-                    }
-                    return CompareFloat(count, condition.Operator, threshold);
+                    return CompareFloat(CountAdjacentEnemies(unit), condition.Operator, threshold);
                 }
 
                 case ConditionProperty.EngagedEnemyCount: {
@@ -527,6 +515,34 @@ namespace WrathTactics.Engine {
 
                 default:
                     return false;
+            }
+        }
+
+        static int CountAdjacentEnemies(UnitEntityData unit) {
+            float meleeRange = RangeBrackets.MaxMeters(RangeBracket.Melee);
+            int count = 0;
+            foreach (var e in GetVisibleEnemies(CurrentOwner)) {
+                if (Vector3.Distance(unit.Position, e.Position) <= meleeRange)
+                    count++;
+            }
+            return count;
+        }
+
+        // The value MatchesPropertyThreshold compares for numeric count properties, for
+        // bucket trace lines only. Null for flags and for margins that trace themselves.
+        static string MeasuredValue(Condition condition, UnitEntityData unit) {
+            switch (condition.Property) {
+                case ConditionProperty.HpPercent:
+                    return $"{(float)unit.HPLeft / Math.Max(1, unit.Stats.HitPoints.ModifiedValue) * 100f:F0}";
+                case ConditionProperty.HpFlat:        return unit.HPLeft.ToString();
+                case ConditionProperty.AC:            return unit.Stats.AC.ModifiedValue.ToString();
+                case ConditionProperty.SaveFortitude: return unit.Stats.SaveFortitude.ModifiedValue.ToString();
+                case ConditionProperty.SaveReflex:    return unit.Stats.SaveReflex.ModifiedValue.ToString();
+                case ConditionProperty.SaveWill:      return unit.Stats.SaveWill.ModifiedValue.ToString();
+                case ConditionProperty.HitDice:       return UnitExtensions.GetHD(unit).ToString();
+                case ConditionProperty.AdjacentEnemyCount:
+                    return CurrentOwner == null ? null : CountAdjacentEnemies(unit).ToString();
+                default:                              return null;
             }
         }
     }
