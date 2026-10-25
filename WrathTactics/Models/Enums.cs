@@ -70,7 +70,8 @@ namespace WrathTactics.Models {
         OptionEffect,             // numeric — magnitude of the GroupOption's effect (stat penalty points, or expected lock rounds for Incapacitated); GroupOption only
         OptionSource,             // value-list — DebuffSourceKind name of the GroupOption (Spell/ClassAbility/…); =/!=; GroupOption only
         OptionEnemiesInRadius,    // numeric — enemies the GroupOption's option hits when cast at the enemy (area radius count, 1 for single/chain); GroupOption only
-        EnemyHDMinusPartyMedian   // numeric — enemyEffectiveHD − median effective level of the active party (WTW-33; mean of the two middle levels when the count is even) — Enemy-scope only; EnemyHDMinusPartyLevel keeps the maximum
+        EnemyHDMinusPartyMedian,  // numeric — enemyEffectiveHD − median effective level of the active party (WTW-33; mean of the two middle levels when the count is even) — Enemy-scope only; EnemyHDMinusPartyLevel keeps the maximum
+        HasAffliction             // 39: value-list — AfflictionKinds name or Any; =/!=; Ally/Self scope: harmful buff/condition kinds the unit carries (WTW-30 cleanse; patched fork = 45)
     }
 
     public enum ConditionOperator {
@@ -95,7 +96,32 @@ namespace WrathTactics.Models {
         MoveToTarget,   // walk towards the target until within ActionDef.MoveWithin (UnitMoveTo, Move slot)
         MoveAwayFromTarget, // walk away from the target until beyond ActionDef.MoveWithin (UnitMoveTo, Move slot; FleeGeometry)
         CastDebuffGroup,    // 11: cast the strongest ally-safe debuff of ActionDef.DebuffGroup (WTW-30)
-        CastConditionOption // 12: cast the option bound by a GroupOption condition row (WTW-30 phase b)
+        CastConditionOption, // 12: cast the option bound by a GroupOption condition row (WTW-30 phase b)
+        RemoveCondition     // 13: cure the afflictions in ActionDef.CleanseKinds from an ally (WTW-30 cleanse)
+    }
+
+    /// <summary>
+    /// Harmful afflictions a cleanse rule can target (WTW-30 cleanse). Flags, persisted as a number: None MUST stay 0,
+    /// append new bits at the END only (never reorder).
+    /// </summary>
+    [System.Flags]
+    public enum AfflictionKinds {
+        None = 0,
+        Paralysis = 1 << 0,
+        Confusion = 1 << 1,
+        StunDaze = 1 << 2,
+        FearShaken = 1 << 3,
+        NauseaSickened = 1 << 4,
+        Blindness = 1 << 5,
+        Poison = 1 << 6,
+        Disease = 1 << 7,
+        Curse = 1 << 8,
+        FatigueExhausted = 1 << 9,
+        StatDebuffAbilityDamage = 1 << 10,
+        NegativeLevel = 1 << 11,
+        Petrified = 1 << 12,
+        SlowedEntangled = 1 << 13,
+        Staggered = 1 << 14   // appended WTW-30 F1: split from StunDaze (Heal removes Stun/Daze, not stagger)
     }
 
     /// <summary>
