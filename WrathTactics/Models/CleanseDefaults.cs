@@ -10,7 +10,8 @@ namespace WrathTactics.Models {
             | AfflictionKinds.FearShaken | AfflictionKinds.NauseaSickened | AfflictionKinds.Blindness
             | AfflictionKinds.Poison | AfflictionKinds.Disease | AfflictionKinds.Curse
             | AfflictionKinds.FatigueExhausted | AfflictionKinds.StatDebuffAbilityDamage
-            | AfflictionKinds.NegativeLevel | AfflictionKinds.Petrified | AfflictionKinds.SlowedEntangled;
+            | AfflictionKinds.NegativeLevel | AfflictionKinds.Petrified | AfflictionKinds.SlowedEntangled
+            | AfflictionKinds.Staggered;
 
         public static AfflictionKinds KindsFor(ActionType action, AfflictionKinds current) {
             if (action == ActionType.RemoveCondition && current == AfflictionKinds.None) return All;
