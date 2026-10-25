@@ -114,7 +114,8 @@ namespace WrathTactics.Models {
         StatDebuffAbilityDamage = 1 << 10,
         NegativeLevel = 1 << 11,
         Petrified = 1 << 12,
-        SlowedEntangled = 1 << 13
+        SlowedEntangled = 1 << 13,
+        Staggered = 1 << 14   // appended WTW-30 F1: split from StunDaze (Heal removes Stun/Daze, not stagger)
     }
 
     /// <summary>

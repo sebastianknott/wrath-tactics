@@ -227,6 +227,7 @@
   "enum.affliction.NegativeLevel": "Negative level",
   "enum.affliction.Petrified": "Petrified",
   "enum.affliction.SlowedEntangled": "Slowed / entangled",
+  "enum.affliction.Staggered": "Staggered",
   "enum.property.HasClass": "HasClass",
   "enum.property.WithinRange": "WithinRange",
   "enum.property.ABMinusAC": "Hit margin (AB − AC)",

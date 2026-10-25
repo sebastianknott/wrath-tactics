@@ -227,6 +227,7 @@
   "enum.affliction.NegativeLevel": "Негативный уровень",
   "enum.affliction.Petrified": "Окаменение",
   "enum.affliction.SlowedEntangled": "Замедлен / опутан",
+  "enum.affliction.Staggered": "Покачивается",
   "enum.property.HasClass": "Есть класс",
   "enum.property.WithinRange": "В радиусе",
   "enum.property.ABMinusAC": "Запас попадания (БА − КБ)",

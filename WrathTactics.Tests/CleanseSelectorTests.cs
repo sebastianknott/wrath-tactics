@@ -27,7 +27,7 @@ namespace WrathTactics.Tests {
         }
 
         // A fresh ally id per test: the latch is process-wide static state.
-        static CleanseSituation Sit(AfflictionKinds mask, AfflictionKinds rule = (AfflictionKinds)((1 << 14) - 1), double now = 100) {
+        static CleanseSituation Sit(AfflictionKinds mask, AfflictionKinds rule = (AfflictionKinds)((1 << 15) - 1), double now = 100) {
             return new CleanseSituation { AllyId = Guid.NewGuid().ToString(), AllyMask = mask, RuleKinds = rule, NowSeconds = now, InCombat = true };
         }
 
