@@ -220,6 +220,7 @@
   "enum.property.HasDescriptorEffect": "受影响",
   "enum.property.ImmuneToEnergy": "免疫能量",
   "enum.property.EnemyHDMinusPartyLevel": "生命骰 − 队伍最高",
+  "enum.property.EnemyHDMinusPartyMedian": "生命骰 − 队伍中位数",
 
   "enum.action.CastSpell": "施放法术",
   "enum.action.CastAbility": "使用能力",
