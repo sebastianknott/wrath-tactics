@@ -636,6 +636,7 @@ namespace WrathTactics.Engine {
             lastReactiveTickTime = 0;
             ActiveRuleTracker.Reset();
             ConditionEvaluator.ResetEngagedTraceCache();
+            OptionCursor.ClearAll();
         }
 
         static string FormatTarget(ResolvedTarget target) {

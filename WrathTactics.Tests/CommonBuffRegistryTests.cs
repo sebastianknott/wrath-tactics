@@ -20,6 +20,7 @@ namespace WrathTactics.Tests {
         [InlineData(ConditionSubject.EnemyHighestHD,     true)]
         [InlineData(ConditionSubject.EnemyLowestHD,      true)]
         [InlineData(ConditionSubject.EnemyNearest,       true)]
+        [InlineData(ConditionSubject.GroupOption,        true)]
         public void IsEnemySubject_classifies_correctly(ConditionSubject subject, bool expected) {
             Assert.Equal(expected, CommonBuffRegistry.IsEnemySubject(subject));
         }
