@@ -109,13 +109,19 @@ namespace WrathTactics.Engine {
         sealed class Reader {
             readonly CleanseProfile m_profile = new CleanseProfile();
             bool m_spell;
+            // Damage on a branch a friendly target can reach (Cleansing Flames: Holy damage on the ally side).
+            // Such a cast may hurt the ally it is meant to cure, so the whole ability is no remedy (WTW-30 3d).
+            bool m_damagesAllies;
+            // > 0 while walking the else-branch of a caster-fact check: that branch is for another KIND of caster
+            // (Lay on Hands: an undead paladin hurts itself), not for the ally the cure goes to.
+            int m_casterElse;
 
             public CleanseProfile Read(BlueprintAbility bp) {
                 m_spell = IsHealSpellType(bp.Type);
                 ReadEffects(bp);
                 var touch = Find<AbilityEffectStickyTouch>(bp)?.TouchDeliveryAbility;
                 if (touch != null) ReadEffects(touch);
-                return m_profile.IsCleanse ? m_profile : CleanseProfile.NotACleanse;
+                return m_profile.IsCleanse && !m_damagesAllies ? m_profile : CleanseProfile.NotACleanse;
             }
 
             void ReadEffects(BlueprintAbility bp) {
@@ -137,7 +143,12 @@ namespace WrathTactics.Engine {
                         var side = AllySideOf(c.ConditionsChecker);
                         if (livingBranch != false && side != AllySide.FalseOnly)
                             WalkList(c.IfTrue, gate.And(CasterFactGate(c.ConditionsChecker)));
-                        if (livingBranch != true && side != AllySide.TrueOnly) WalkList(c.IfFalse, gate);
+                        if (livingBranch != true && side != AllySide.TrueOnly) {
+                            bool casterElse = CasterFactGate(c.ConditionsChecker) != null;
+                            if (casterElse) m_casterElse++;
+                            WalkList(c.IfFalse, gate);
+                            if (casterElse) m_casterElse--;
+                        }
                         break;
                     }
                     case ContextActionSavingThrow st:
@@ -146,6 +157,9 @@ namespace WrathTactics.Engine {
                     case ContextActionConditionalSaved cs:
                         WalkList(cs.Failed, gate);
                         WalkList(cs.Succeed, gate);
+                        break;
+                    case ContextActionDealDamage _:
+                        if (m_casterElse == 0) m_damagesAllies = true;
                         break;
                     case ContextActionDispelMagic dispel:
                         AddDispel(dispel, gate);
