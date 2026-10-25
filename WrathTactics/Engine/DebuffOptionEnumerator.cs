@@ -32,7 +32,7 @@ namespace WrathTactics.Engine {
     /// Rebuilt every call: slot and charge counts change by the second, and the blueprint walk behind each
     /// candidate is cached by DebuffClassifier.
     /// </summary>
-    internal static class DebuffOptionEnumerator {
+    internal static partial class DebuffOptionEnumerator {
         internal static List<DebuffOption> Enumerate(UnitEntityData owner, DebuffGroup group, SpellSourceMask mask) {
             var result = new List<DebuffOption>();
             bool wantSpell = (mask & SpellSourceMask.Spell) != 0;
