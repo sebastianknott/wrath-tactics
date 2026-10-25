@@ -60,6 +60,7 @@
   "target.filter.ally": "Verbündeter:",
   "ally.picker.any": "(Beliebiger Verbündeter)",
 
+  "cooldown.uninterruptible": "Nicht unterbrechbar (keine andere Regel darf abbrechen)",
   "cooldown.label": "Abklingzeit (Runden):",
   "cooldown.once_per_combat": "Einmal pro Kampf",
 
