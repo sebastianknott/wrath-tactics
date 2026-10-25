@@ -34,7 +34,7 @@ namespace WrathTactics.Engine {
         public static readonly CleanseProfile NotACleanse = new CleanseProfile();
 
         public readonly List<CleanseEffect> Effects = new List<CleanseEffect>();
-        /// <summary>The ability heals hit points as well (Heal, Lay on Hands): ranked as the last resort.</summary>
+        /// <summary>The ability heals hit points as well (spell-slot Heal family only; Lay on Hands is a regular tier-0 cleanse): ranked as the last resort.</summary>
         public bool HealsHp;
 
         public bool IsCleanse { get { return Effects.Count > 0; } }

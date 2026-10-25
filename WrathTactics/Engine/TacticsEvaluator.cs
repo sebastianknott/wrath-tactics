@@ -228,7 +228,10 @@ namespace WrathTactics.Engine {
                     // MoveToTarget falls through by design once the unit is inside its
                     // bracket (validator traced "already within"); that is not a WARN. A walk
                     // still under way keeps this rule's priority: hold the paired slots.
-                    if (ActionValidator.IsWalkAction(rule.Action.Type)) {
+                    if (rule.Action.Type == ActionType.RemoveCondition) {
+                        // No remedy for the ally's current afflictions is the normal state of an armed cleanse rule.
+                        Log.Engine.Trace($"{unit.CharacterName} Rule {i} \"{rule.Name}\" ({source}): no cleanse remedy available");
+                    } else if (ActionValidator.IsWalkAction(rule.Action.Type)) {
                         if (tick.WalkHold == null && ActionValidator.WalkInProgress(unit, target, rule.Action)) {
                             tick.WalkHold = $"Rule {i} \"{rule.Name}\" ({source})";
                         }

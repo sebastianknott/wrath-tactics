@@ -56,6 +56,15 @@ namespace WrathTactics.Engine {
         /// <summary>The reading itself, without cache and without the failure guard (tests surface exceptions).</summary>
         internal static CleanseProfile ReadUncached(BlueprintAbility bp) { return new Reader().Read(bp); }
 
+        /// <summary>As <see cref="ReadUncached(BlueprintAbility)"/>; <paramref name="excludedForDamage"/> is true when a
+        /// cleansing ability was dropped only because its ally branch deals damage (tests list these for review).</summary>
+        internal static CleanseProfile ReadUncached(BlueprintAbility bp, out bool excludedForDamage) {
+            var reader = new Reader();
+            var profile = reader.Read(bp);
+            excludedForDamage = reader.ExcludedForDamage;
+            return profile;
+        }
+
         /// <summary>
         /// Caster facts an effect hangs on: all of <see cref="Required"/> held and none of <see cref="Forbidden"/>.
         /// </summary>
@@ -116,11 +125,14 @@ namespace WrathTactics.Engine {
             // (Lay on Hands: an undead paladin hurts itself), not for the ally the cure goes to.
             int m_casterElse;
 
+            public bool ExcludedForDamage { get; private set; }
+
             public CleanseProfile Read(BlueprintAbility bp) {
                 m_spell = IsHealSpellType(bp.Type);
                 ReadEffects(bp);
                 var touch = Find<AbilityEffectStickyTouch>(bp)?.TouchDeliveryAbility;
                 if (touch != null) ReadEffects(touch);
+                ExcludedForDamage = m_profile.IsCleanse && m_damagesAllies;
                 return m_profile.IsCleanse && !m_damagesAllies ? m_profile : CleanseProfile.NotACleanse;
             }
 
