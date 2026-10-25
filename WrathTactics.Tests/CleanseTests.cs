@@ -227,6 +227,21 @@ namespace WrathTactics.Tests {
         }
 
         [Fact]
+        public void Caster_levels_ignore_buffs_the_mask_ignores() {
+            var cl = CleanseAfflictionReader.CasterLevels(new[] {
+                new BuffReading { Kinds = AfflictionKinds.Curse, CasterLevel = 5 },
+                new BuffReading { Kinds = AfflictionKinds.Curse, CasterLevel = 9, AllySourced = true },
+                new BuffReading { Kinds = AfflictionKinds.Curse, CasterLevel = 12, Protective = true },
+                new BuffReading { Kinds = AfflictionKinds.Curse, CasterLevel = 13, Polymorph = true },
+                new BuffReading { Kinds = AfflictionKinds.Poison, CasterLevel = 14, SelfCast = true },
+                new BuffReading { Kinds = AfflictionKinds.Curse | AfflictionKinds.Disease, CasterLevel = 7 },
+            });
+            Assert.Equal(7, cl[AfflictionKinds.Curse]);
+            Assert.Equal(7, cl[AfflictionKinds.Disease]);
+            Assert.False(cl.ContainsKey(AfflictionKinds.Poison));
+        }
+
+        [Fact]
         public void Ally_mask_reads_paralysis() {
             var mask = CleanseAfflictionReader.Mask(new[] { Buff(AfflictionKinds.Paralysis), Buff(AfflictionKinds.Poison) },
                 AfflictionKinds.Blindness);

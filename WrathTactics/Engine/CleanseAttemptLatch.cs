@@ -12,7 +12,16 @@ namespace WrathTactics.Engine {
         internal const double AttemptLatchCombatSec = 6.0;
         internal const double AttemptLatchIdleSec = 60.0;
 
+        /// <summary>Short block on (ally, kind) for every remedy, so the tick after an issue does not pick another
+        /// remedy for the same affliction while the first cast is still resolving.</summary>
+        internal const double GraceSeconds = 2.0;
+
         static readonly Dictionary<string, double> s_expiry = new Dictionary<string, double>();
+        static readonly Dictionary<string, double> s_grace = new Dictionary<string, double>();
+
+        static string GraceKey(string allyId, AfflictionKinds kind) {
+            return allyId + "|" + (int)kind;
+        }
 
         static string Key(string allyId, AfflictionKinds kind, string remedyKey) {
             return allyId + "|" + (int)kind + "|" + remedyKey;
@@ -25,12 +34,18 @@ namespace WrathTactics.Engine {
         /// <summary>Latches every kind bit in <paramref name="kinds"/> until now + the window.</summary>
         internal static void Record(string allyId, AfflictionKinds kinds, string remedyKey, double nowSeconds, bool inCombat) {
             double until = nowSeconds + WindowSeconds(inCombat);
-            foreach (var bit in CleanseTable.Bits(kinds))
+            foreach (var bit in CleanseTable.Bits(kinds)) {
                 s_expiry[Key(allyId, bit, remedyKey)] = until;
+                s_grace[GraceKey(allyId, bit)] = nowSeconds + GraceSeconds;
+            }
         }
 
         /// <summary>True while an earlier attempt of this remedy on this ally for this single kind bit is still in its window.</summary>
         internal static bool IsBlocked(string allyId, AfflictionKinds kind, string remedyKey, double nowSeconds) {
+            if (s_grace.TryGetValue(GraceKey(allyId, kind), out var graceUntil)) {
+                if (graceUntil > nowSeconds) return true;
+                s_grace.Remove(GraceKey(allyId, kind));
+            }
             var key = Key(allyId, kind, remedyKey);
             if (!s_expiry.TryGetValue(key, out var until)) return false;
             if (until > nowSeconds) return true;
@@ -46,6 +61,6 @@ namespace WrathTactics.Engine {
             return free;
         }
 
-        internal static void Clear() { s_expiry.Clear(); }
+        internal static void Clear() { s_expiry.Clear(); s_grace.Clear(); }
     }
 }
