@@ -242,6 +242,7 @@
   "enum.property.ImmuneToEnergy": "Иммунитет к энергии",
   "enum.property.HasEnergyResistance": "Сопротивление энергии",
   "enum.property.EnemyHDMinusPartyLevel": "КЗ − МаксГруппы",
+  "enum.property.EnemyHDMinusPartyMedian": "КЗ − МедианаГруппы",
 
   "enum.action.CastSpell": "Заклинание",
   "enum.action.CastAbility": "Способность",
