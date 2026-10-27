@@ -50,6 +50,7 @@ namespace WrathTactics.Engine {
             LastMatchedAlly = null;
             LastMatchedSelf = null;
             DebuffSelection.Clear();
+            CleanseSelection.Clear();
             ClearOptionLatch();
         }
 

@@ -36,6 +36,7 @@ namespace WrathTactics.UI {
                     var defaultBracket = TargetDefaults.MoveBracketForAction((ActionType)idx, rule.Action.MoveWithin);
                     if (defaultBracket.HasValue) rule.Action.MoveWithin = defaultBracket.Value;
                     rule.Action.DebuffGroup = DebuffDefaults.GroupFor((ActionType)idx, rule.Action.DebuffGroup);
+                    rule.Action.CleanseKinds = CleanseDefaults.KindsFor((ActionType)idx, rule.Action.CleanseKinds);
                     if ((ActionType)idx == ActionType.CastDebuffGroup) {
                         // Metamagic rod and reservoir boost belong to CastSpell; a debuff cast never applies them.
                         rule.Action.MetamagicRod = null;
@@ -119,6 +120,11 @@ namespace WrathTactics.UI {
 
             if (rule.Action.Type == ActionType.CastDebuffGroup) {
                 SetupDebuffGroupSelectors(row);
+                return;
+            }
+
+            if (rule.Action.Type == ActionType.RemoveCondition) {
+                SetupCleanseSelectors(row);
                 return;
             }
 
@@ -226,6 +232,7 @@ namespace WrathTactics.UI {
                                 rule.Action.Type != ActionType.DoNothing &&
                                 rule.Action.Type != ActionType.CastDebuffGroup &&
                                 rule.Action.Type != ActionType.CastConditionOption &&
+                                rule.Action.Type != ActionType.RemoveCondition &&
                                 rule.Action.Type != ActionType.ThrowSplash &&
                                 rule.Action.Type != ActionType.SwitchWeaponSet &&
                                 !ActionValidator.IsWalkAction(rule.Action.Type);
@@ -446,6 +453,7 @@ namespace WrathTactics.UI {
                 || actionType == ActionType.ToggleActivatable
                 || actionType == ActionType.CastSpell || actionType == ActionType.CastAbility
                 || actionType == ActionType.CastDebuffGroup || actionType == ActionType.CastConditionOption
+                || actionType == ActionType.RemoveCondition
                 || actionType == ActionType.SwitchWeaponSet || ActionValidator.IsWalkAction(actionType)) {
                 RebuildBody();
                 return;
@@ -457,6 +465,7 @@ namespace WrathTactics.UI {
                              actionType != ActionType.DoNothing &&
                              actionType != ActionType.CastDebuffGroup &&
                              actionType != ActionType.CastConditionOption &&
+                             actionType != ActionType.RemoveCondition &&
                              actionType != ActionType.ThrowSplash &&
                              actionType != ActionType.SwitchWeaponSet &&
                              !ActionValidator.IsWalkAction(actionType);
@@ -501,6 +510,7 @@ namespace WrathTactics.UI {
             if (actionType == ActionType.AttackTarget || actionType == ActionType.DoNothing
                 || actionType == ActionType.Heal || actionType == ActionType.ThrowSplash
                 || actionType == ActionType.CastDebuffGroup || actionType == ActionType.CastConditionOption
+                || actionType == ActionType.RemoveCondition
                 || actionType == ActionType.SwitchWeaponSet || ActionValidator.IsWalkAction(actionType))
                 return new List<SpellDropdownProvider.SpellEntry>();
 
