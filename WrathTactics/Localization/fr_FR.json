@@ -221,6 +221,7 @@
   "enum.property.IsBeingCastOnByAlly": "Ciblé par un sort allié",
   "enum.property.HasDescriptorEffect": "Affecté par",
   "enum.property.ImmuneToEnergy": "Immunisé à l'énergie",
+  "enum.property.HasEnergyResistance": "Résiste à l'énergie",
   "enum.property.EnemyHDMinusPartyLevel": "DV − GroupeMax",
 
   "enum.action.CastSpell": "Lancer un sort",
