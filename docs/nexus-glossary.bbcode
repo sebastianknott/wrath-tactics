@@ -26,6 +26,7 @@ Every term in the rule editor, in UI order. All checks are [b]snapshots[/b]: a c
 [*][b]Enemy: biggest / lowest threat[/b]: Scans enemies in that order (threat ≈ attack bonus + expected damage per hit) and takes the first one that passes the row's property. Also decides which enemy [b]Condition target[/b] points at.
 [*][b]Enemy: highest / lowest HP%, AC, Fort, Reflex, Will, HD[/b]: Same as above, sorted by that stat. Only the [i]first[/i] sorted subject in a group sets the order — a second one does not add a "must also be lowest X" test.
 [*][b]Enemy: nearest[/b]: Same, sorted by distance to Self.
+[*][b]Debuff option of group[/b]: An enemy matches when at least one debuff option of the chosen effect group (Armor class, Attack, …, Incapacitated) satisfies [b]all[/b] the option rows of the group at once — see Debuff option conditions.
 [*][b]Specific ally[/b]: One pinned companion or pet, picked by name.
 [*][b]Combat[/b]: The fight as a whole: IsInCombat (Yes/No) and CombatRounds (6-second rounds since combat started).
 [/list]
@@ -61,6 +62,9 @@ Every term in the rule editor, in UI order. All checks are [b]snapshots[/b]: a c
 [*][b]WithinRange[/b] (bracket): Distance between Self and the checked unit — see Range brackets. Self → WithinRange is meaningless (always 0 m).
 [*][b]DC − Save[/b] (number): Save DC of the spell this rule will cast minus the target's matching save — see DC − Save. Enemy subjects only.
 [*][b]Penetration − SR[/b] (number): Caster level plus penetration bonuses of the spell this rule will cast minus the target's spell resistance — see Penetration − SR. No resistance → +99, immune → −99. Enemy subjects only.
+[*][b]Option effect[/b] (number): Debuff option rows only: size of the option's effect on one target in the chosen group (penalty points; for Incapacitated the expected rounds of lock). It does not include how many enemies an area option hits; use [b]Enemies in radius[/b] for that.
+[*][b]Option source[/b] (Spell / Class ability / Item ability / Scroll / Thrown item): Debuff option rows only: where the option comes from. != excludes a source, e.g. keep scrolls out.
+[*][b]Enemies in radius[/b] (number): Debuff option rows only: enemies an area option hits when cast around the enemy under test (the enemy itself counts; single-target and chain options give 1).
 [*][b]Hit margin (AB − AC)[/b] (number): An ally's attack bonus minus the enemy's AC — see Hit Margin. Enemy subjects only.
 [*][b]HD − PartyMax[/b] (number): Enemy hit dice minus the party's highest character + mythic level. Positive = the enemy outlevels you. Enemy subjects only.
 [*][b]Targeting me[/b] (Yes/No): This enemy's current attack or spell is aimed at Self. Enemy subjects only.
@@ -82,6 +86,8 @@ Every term in the rule editor, in UI order. All checks are [b]snapshots[/b]: a c
 [*][b]ToggleActivatable[/b]: Switches a toggle ability (Power Attack, Fighting Defensively, stances, Smite …) [b]On[/b] or [b]Off[/b]. Fires only when the toggle is not already in that state.
 [*][b]AttackTarget[/b]: Makes a normal weapon attack on the target.
 [*][b]Heal[/b]: Picks a heal automatically. [i]Mode[/i] Strongest/Any = highest-ranked (spellbook spell by level > class feature > scroll > potion), Weakest = lowest-ranked. [i]Sources[/i] can exclude scrolls or potions. [i]Energy[/i] Auto heals living with Cure and undead with Inflict; Positive/Negative force one. Scrolls that would need a risky Use Magic Device check are only used as a last resort.
+[*][b]CastDebuffGroup[/b]: Picks the best debuff for the chosen [i]group[/i] out of everything the unit can cast right now: Armor class, Attack, Damage, the three saves, Dexterity, Strength, Constitution, Speed or Incapacitated. Spells (spellbook, class abilities, item abilities), scrolls and throwable items compete; potions never do. Options are ranked by expected effect on the target (size of the penalty × chance the save fails × chance to beat spell resistance); an effect that ends on damage ranks last, except for Incapacitated, where the longest expected lock wins and ties go to the stronger lock. Equal options prefer the lower spell level, then a spell slot over a scroll. Options that would also hit allies, targets that already carry the effect, immune targets and unbeatable spell resistance are skipped. The last entry of the group list switches the action to Heal.
+[*][b]CastConditionOption[/b]: Casts the debuff option that a [b]Debuff option[/b] condition row picked (see Debuff option). Set [i]Target[/i] to [i]Condition target[/i]. Without such a row in the rule's condition group it never fires.
 [*][b]ThrowSplash[/b]: Throws a splash weapon (Alchemist's Fire, Acid Flask, Holy Water …). Any = first in inventory, Strongest = highest damage, Cheapest = lowest value.
 [*][b]Switch weapon set[/b]: Switches to weapon set 1–4.
 [*][b]Move to target[/b]: Walks toward the target until within the chosen bracket ("stop within Melee / Cone / Short …"). Re-checked every tick, so a moving target is followed. Does nothing when already within that distance — which is why [b]Target: Self[/b] never moves. While the walk is running, lower rules that would need the move or standard action are held back.
