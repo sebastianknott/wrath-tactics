@@ -255,6 +255,8 @@ namespace WrathTactics.Engine {
                     Log.Engine.Trace($"HasEnergyResistance {condition.Value} on {unit.CharacterName}: resist={resist}, value2='{condition.Value2}', op={condition.Operator} -> {resMatch}");
                     return resMatch;
                 }
+                case ConditionProperty.HasAffliction:
+                    return CleanseAfflictionReader.Matches(CleanseAfflictionReader.Read(unit), condition.Value, condition.Operator);
 
                 case ConditionProperty.SpellSlotsAtLevel:
                     int level = (int)threshold;
@@ -501,6 +503,8 @@ namespace WrathTactics.Engine {
 
                 case ConditionProperty.Resource:
                     return EvaluateResource(condition, unit);
+                case ConditionProperty.HasAffliction:
+                    return CleanseAfflictionReader.Matches(CleanseAfflictionReader.Read(unit), condition.Value, condition.Operator);
 
                 case ConditionProperty.CreatureType:
                     bool ctMatch2 = CheckCreatureType(unit, condition.Value);
