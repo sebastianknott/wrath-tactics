@@ -12,7 +12,7 @@ namespace WrathTactics.Tests {
         // Persisted JSON stores the numeric enum index — appending must never shift it.
         [Fact]
         public void Enum_index_is_pinned() {
-            Assert.Equal(36, (int)ConditionProperty.SpellResistMargin);
+            Assert.Equal(39, (int)ConditionProperty.SpellResistMargin);
         }
 
         [Theory]
