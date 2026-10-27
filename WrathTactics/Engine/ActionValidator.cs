@@ -98,6 +98,19 @@ namespace WrathTactics.Engine {
                     return CanMoveAway(owner, target, action.MoveWithin, out _);
                 case ActionType.DoNothing:
                     return true;
+                case ActionType.CastDebuffGroup: {
+                    var choice = FindBestDebuff(owner, unit, action);
+                    if (choice == null) return false;
+                    DebuffSelection.Remember(owner, unit, choice.Value);
+                    abilitySlot = choice.Value.Option.Ability.RuntimeActionType;
+                    return true;
+                }
+                case ActionType.CastConditionOption: {
+                    if (!CanExecuteConditionOption(owner, unit, out var optionChoice)) return false;
+                    DebuffSelection.Remember(owner, unit, optionChoice);
+                    abilitySlot = optionChoice.Option.Ability.RuntimeActionType;
+                    return true;
+                }
                 default:
                     return false;
             }
