@@ -23,7 +23,7 @@ namespace WrathTactics.Tests {
         public void ConditionProperty_indices_stay_stable() {
             Assert.Equal(9, (int)ConditionProperty.IsDead);
             Assert.Equal(34, (int)ConditionProperty.WieldsRangedWeapon);
-            Assert.Equal(36, (int)ConditionProperty.IsDowned);
+            Assert.Equal(38, (int)ConditionProperty.IsDowned);
         }
     }
 }

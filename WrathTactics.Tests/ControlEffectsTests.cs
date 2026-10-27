@@ -10,7 +10,7 @@ namespace WrathTactics.Tests {
     public class ControlEffectsTests {
         [Fact]
         public void Persisted_index_is_pinned() {
-            Assert.Equal(36, (int)ConditionProperty.IsVisible);
+            Assert.Equal(40, (int)ConditionProperty.IsVisible);
         }
 
         [Theory]

@@ -76,7 +76,7 @@ namespace WrathTactics.Tests {
         [Fact]
         public void ConditionProperty_IndicesStayAppendOnly() {
             Assert.Equal(34, (int)ConditionProperty.WieldsRangedWeapon);
-            Assert.Equal(36, (int)ConditionProperty.HasEnergyResistance);
+            Assert.Equal(37, (int)ConditionProperty.HasEnergyResistance);
         }
     }
 }
