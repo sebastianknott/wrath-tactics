@@ -164,6 +164,7 @@
   "condition.resourceAmount": "Amount",
   "bool.yes": "Yes",
   "bool.no": "No",
+  "condition.resistAmount": "Min. resistance",
 
   "enum.subject.Self": "Self",
   "enum.subject.Ally": "Ally",
