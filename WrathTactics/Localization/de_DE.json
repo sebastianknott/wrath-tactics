@@ -242,6 +242,7 @@
   "enum.property.ImmuneToEnergy": "Immun gegen Energie",
   "enum.property.HasEnergyResistance": "Resistenz gegen Energie",
   "enum.property.EnemyHDMinusPartyLevel": "TW − GruppenMax",
+  "enum.property.EnemyHDMinusPartyMedian": "TW − GruppenMedian",
 
   "enum.action.CastSpell": "Zauber wirken",
   "enum.action.CastAbility": "Fähigkeit nutzen",
