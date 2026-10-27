@@ -163,6 +163,8 @@
   "condition.slotMinCount": "мин. кол-во",
   "condition.resourceGuid": "GUID ресурса",
   "condition.resourceAmount": "Кол-во",
+  "condition.count.shared": "вместе",
+  "condition.count.own": "отдельно",
   "bool.yes": "Да",
   "bool.no": "Нет",
   "condition.resistAmount": "Мин. сопр.",

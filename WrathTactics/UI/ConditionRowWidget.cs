@@ -129,6 +129,16 @@ namespace WrathTactics.UI {
                         condition.Value2 = v;
                         onChanged?.Invoke();
                     });
+
+                    // Shared (default): this row ANDs with the other count rows of the group.
+                    // Own count: separate threshold/operator, counted independently (CountSeparately).
+                    var countModeNames = new List<string> {
+                        "condition.count.shared".i18n(), "condition.count.own".i18n() };
+                    PopupSelector.CreateInRow(root, "CountMode", 0.09f,
+                        countModeNames, condition.CountSeparately ? 1 : 0, v => {
+                            condition.CountSeparately = v == 1;
+                            onChanged?.Invoke();
+                        });
                 } else {
                     // AllyByName: ally picker (live PartyAndPets). Stored in Value2 as UniqueId.
                     CreateAllyPicker(root, 0.14f, "AllyByNamePicker",
