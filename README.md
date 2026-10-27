@@ -201,9 +201,9 @@ Every term in the rule editor, in UI order. All checks are **snapshots**: a cond
 |---|---|
 | **Self** | The companion this rule belongs to. |
 | **Ally** | *Any one* party member or pet other than Self. Several Ally rows in the same group must all be true for the **same** ally. |
-| **AllyCount** | Counts allies other than Self that satisfy the property; the count is compared with the number on the right (`>= 1`, `< 3`, …). The trace log lists each ally that fails a row with the value it measured, e.g. `count HpPercent LessThan 40 (actual 79)`. |
+| **AllyCount** | Counts allies other than Self that satisfy the property; the count is compared with the number on the right (`>= 1`, `< 3`, …). Several count rows in one group are counted together (a unit must satisfy all of them) unless a row is set to *own count*: then it has its own number and comparison and is counted independently (e.g. "no ally under 70 %" and "no ally in melee"). The trace log lists each ally that fails a row with the value it measured, e.g. `count HpPercent LessThan 40 (actual 79)`. |
 | **Enemy** | *Any one* visible, living enemy currently in combat with the party. Several Enemy rows in a group must all be true for the **same** enemy. |
-| **EnemyCount** | Counts those enemies; `EnemyCount = 0` is a valid gate ("no enemy in combat"). |
+| **EnemyCount** | Counts those enemies; `EnemyCount = 0` is a valid gate ("no enemy in combat"). Supports *own count* like AllyCount. |
 | **Enemy: biggest / lowest threat** | Scans enemies in that order (threat ≈ attack bonus + expected damage per hit) and takes the first one that passes the row's property. Also decides which enemy **Condition target** points at. |
 | **Enemy: highest / lowest HP%, AC, Fort, Reflex, Will, HD** | Same as above, sorted by that stat. Only the *first* sorted subject in a group sets the order — a second one does not add a "must also be lowest X" test. |
 | **Enemy: nearest** | Same, sorted by distance to Self. |
