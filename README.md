@@ -153,6 +153,16 @@ A **positive** margin means the enemy is *likely to fail* the save; negative mea
 
 The margin also counts situational save bonuses the target carries against this spell: bonuses against the spell's descriptor (for example mind-affecting or fear), against its school, and against arcane or divine spells, plus any extra save DC your caster gets for that save type. Bonuses of the same non-stacking type count once, and only the part above what the save already includes. Bonuses tied to specific spells or ability types, and Mythic halving, are not counted.
 
+### Penetration − SR
+
+Takes your **penetration** for the spell this rule will cast — caster level plus Spell Penetration, Greater Spell Penetration and the mythic penetration bonus — and subtracts the target's **spell resistance**:
+
+```
+Penetration − SR = margin
+```
+
+The game succeeds against spell resistance when `d20 + penetration > SR`, so a margin of **−9** is a 60 % chance, **−16** only 25 %, and **0** or more is certain. Use it to keep a precious slot away from targets that would shrug the spell off, e.g. *cast Hold Monster if Enemy Penetration − SR ≥ −9*. Spells that never check spell resistance and targets without any spell resistance report **+99**, so the row never blocks them. A target that is immune to the spell reports **−99** and fails the row. Some niche penetration sources (class-bound spell lists, a few monster abilities) are not counted.
+
 ### Hit Margin (AB − AC)
 
 Your **ally's attack bonus** minus the **enemy's AC**:
@@ -231,6 +241,7 @@ Every term in the rule editor, in UI order. All checks are **snapshots**: a cond
 | **Resource** | resource GUID (+ optional amount) | The unit has at least one use left of that class resource (Ki, Lay on Hands, Arcane Reservoir, …). Fill in the *Amount* field to compare the remaining uses with the operator instead, e.g. `>= 2`. An empty or unusable amount keeps "at least one use left". A GUID the game does not know never matches. Self only. |
 | **WithinRange** | bracket | Distance between Self and the checked unit — see [Range brackets](#range-brackets). Self → WithinRange is meaningless (always 0 m). |
 | **DC − Save** | number | Save DC of the spell this rule will cast minus the target's matching save, including its situational save bonuses against that spell (descriptor, school, arcane/divine) — see [DC − Save](#dc--save). Enemy subjects only. |
+| **Penetration − SR** | number | Caster level plus penetration bonuses of the spell this rule will cast minus the target's spell resistance — see [Penetration − SR](#penetration--sr). No resistance → +99, immune → −99. Enemy subjects only. |
 | **Hit margin (AB − AC)** | number | An ally's attack bonus against that enemy minus the enemy's AC — see [Hit Margin](#hit-margin-ab--ac). Enemy subjects only. |
 | **HD − PartyMax** | number | Enemy hit dice minus the party's highest character + mythic level. Positive = the enemy outlevels you. Enemy subjects only. |
 | **Targeting me** | Yes/No | This enemy's current attack or spell is aimed at Self. Enemy subjects only. |
