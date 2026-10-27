@@ -151,7 +151,7 @@ Your **ally's attack bonus** minus the **enemy's AC**:
 AB − AC = margin
 ```
 
-A **positive** margin means you hit easily — it's how many points of slack you have before penalties start costing you hits. A **negative** margin is how far short you are. Both numbers are the *current* values with every active buff, stance and debuff folded in, so you never have to track exact numbers yourself. The `(Ally)` field picks whose attack bonus to use: leave it empty for the party's best, or pin a specific companion. Great for stance decisions, e.g. *toggle Power Attack on only while Hit Margin ≥ -1*.
+A **positive** margin means you hit easily — it's how many points of slack you have before penalties start costing you hits. A **negative** margin is how far short you are. Both numbers are the *current* values with every active buff, stance and debuff folded in, so you never have to track exact numbers yourself. The attack bonus is the one against that specific enemy, so target-side modifiers such as shooting into melee, flanking and concealment count too. With the `(Ally)` field empty, the best ally is picked separately for each enemy. The `(Ally)` field picks whose attack bonus to use: leave it empty for the party's best, or pin a specific companion. Great for stance decisions, e.g. *toggle Power Attack on only while Hit Margin ≥ -1*.
 
 ### Range brackets
 
@@ -217,7 +217,7 @@ Every term in the rule editor, in UI order. All checks are **snapshots**: a cond
 | **Resource** | resource | The unit has at least one use left of that class resource (Ki, Lay on Hands, Arcane Reservoir, …). |
 | **WithinRange** | bracket | Distance between Self and the checked unit — see [Range brackets](#range-brackets). Self → WithinRange is meaningless (always 0 m). |
 | **DC − Save** | number | Save DC of the spell this rule will cast minus the target's matching save — see [DC − Save](#dc--save). Enemy subjects only. |
-| **Hit margin (AB − AC)** | number | An ally's attack bonus minus the enemy's AC — see [Hit Margin](#hit-margin-ab--ac). Enemy subjects only. |
+| **Hit margin (AB − AC)** | number | An ally's attack bonus against that enemy minus the enemy's AC — see [Hit Margin](#hit-margin-ab--ac). Enemy subjects only. |
 | **HD − PartyMax** | number | Enemy hit dice minus the party's highest character + mythic level. Positive = the enemy outlevels you. Enemy subjects only. |
 | **Targeting me** | Yes/No | This enemy's current attack or spell is aimed at Self. Enemy subjects only. |
 | **Targeting ally** | Yes/No | This enemy is aiming at a party member (optionally one pinned companion). Enemy subjects only. |
