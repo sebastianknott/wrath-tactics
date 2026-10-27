@@ -204,7 +204,7 @@ Every term in the rule editor, in UI order. All checks are **snapshots**: a cond
 | **AC** | number | Current Armor Class with every active buff and debuff. |
 | **SaveFortitude / SaveReflex / SaveWill** | number | Current saving-throw bonus. |
 | **HitDice** | number | Hit dice (character level without mythic ranks). |
-| **HasBuff** | buff | The unit carries exactly that buff (picked from the buff list). `!=` means "is missing it". |
+| **HasBuff** | buff | The unit carries exactly that buff (picked from the buff list). Buffs a unit has innately from its blueprint, without an applied effect, count too. `!=` means "is missing it". |
 | **HasCondition** | condition | The unit has that game condition (Paralyzed, Stunned, Frightened, Nauseated, Confused, Blinded, Prone, Entangled, Exhausted, Fatigued, Shaken, Sickened, Sleeping, Petrified, Slowed, Staggered, Dazed, Dazzled, Helpless, Cowering, Death's Door). |
 | **Affected by** | Poison / Disease / Bleed | Any active effect of that kind, no matter which spell or monster caused it. |
 | **Immune to energy** | Fire / Cold / Electricity / Acid / Sonic | The unit is fully immune to that energy type. |
