@@ -12,6 +12,7 @@ Every term in the rule editor, in UI order. All checks are [b]snapshots[/b]: a c
 [*][b]DoNothing[/b] is the one hard stop: everything below it is ignored while its conditions hold.
 [*]In combat the lists are re-evaluated every ~3 s (configurable), out of combat every ~2 s — but out of combat only for rules carrying Combat → IsInCombat → No.
 [*][b]Cooldown (rounds)[/b]: after the rule fires, it stays quiet for that many 6-second rounds. 0 = may fire every tick.
+[*][b]Once per combat[/b]: in combat, the rule fires at most once per companion for each fight. The next combat arms it again. Out of combat the box has no effect, and the cooldown keeps applying as set.
 [*][b]Enabled[/b]: unticked rules are skipped entirely.
 [/list]
 
