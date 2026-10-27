@@ -60,6 +60,7 @@
   "target.filter.ally": "盟友:",
   "ally.picker.any": "(任意盟友)",
 
+  "cooldown.uninterruptible": "不可打断（其他规则不能取消）",
   "cooldown.label": "冷却 (回合):",
   "cooldown.once_per_combat": "每场战斗一次",
 
