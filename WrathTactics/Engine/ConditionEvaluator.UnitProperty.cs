@@ -78,6 +78,16 @@ namespace WrathTactics.Engine {
                     return CompareFloat(margin, condition.Operator, threshold);
                 }
 
+                case ConditionProperty.EnemyHDMinusPartyMedian: {
+                    if (!IsEnemyScope(condition.Subject)) {
+                        Log.Engine.Trace($"EnemyHDMinusPartyMedian: subject {condition.Subject} is not Enemy-scope, returning false");
+                        return false;
+                    }
+                    float margin = ComputeHDMinusPartyMedian(unit);
+                    if (float.IsNaN(margin)) return false;
+                    return CompareFloat(margin, condition.Operator, threshold);
+                }
+
                 case ConditionProperty.IsTargetingSelf: {
                     if (!IsEnemyScope(condition.Subject)) {
                         Log.Engine.Trace($"IsTargetingSelf: subject {condition.Subject} is not Enemy-scope, returning false");
@@ -398,6 +408,15 @@ namespace WrathTactics.Engine {
                         System.Globalization.CultureInfo.InvariantCulture, out threshold))
                         return false;
                     float margin = ComputeHDMinusPartyLevel(unit);
+                    if (float.IsNaN(margin)) return false;
+                    return CompareFloat(margin, condition.Operator, threshold);
+                }
+
+                case ConditionProperty.EnemyHDMinusPartyMedian: {
+                    if (!float.TryParse(condition.Value, System.Globalization.NumberStyles.Any,
+                        System.Globalization.CultureInfo.InvariantCulture, out threshold))
+                        return false;
+                    float margin = ComputeHDMinusPartyMedian(unit);
                     if (float.IsNaN(margin)) return false;
                     return CompareFloat(margin, condition.Operator, threshold);
                 }

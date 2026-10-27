@@ -247,6 +247,7 @@ Every term in the rule editor, in UI order. All checks are **snapshots**: a cond
 | **Enemies in radius** | number | Debuff option rows only: enemies an area option hits when cast around the enemy under test (the enemy itself counts; single-target and chain options give 1). |
 | **Hit margin (AB − AC)** | number | An ally's attack bonus minus the enemy's AC — see [Hit Margin](#hit-margin-ab--ac). Enemy subjects only. |
 | **HD − PartyMax** | number | Enemy hit dice minus the party's highest character + mythic level. Positive = the enemy outlevels you. Enemy subjects only. |
+| **HD − PartyMedian** | number | Enemy hit dice minus the median character + mythic level of the active party (mean of the two middle levels when the party size is even, so the margin can end in .5). Pets, reserve companions and ex-companions are not counted. One high-level outlier does not move it. Enemy subjects only. |
 | **Targeting me** | Yes/No | This enemy's current attack or spell is aimed at Self. Enemy subjects only. |
 | **Targeting ally** | Yes/No | This enemy is aiming at a party member (optionally one pinned companion). Enemy subjects only. |
 | **Targeted by ally** | Yes/No | A party member (optionally a pinned one) is attacking this enemy. Enemy subjects only. |
