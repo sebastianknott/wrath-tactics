@@ -35,8 +35,16 @@ namespace WrathTactics.UI {
                     rule.Action.AbilityId = "";
                     var defaultBracket = TargetDefaults.MoveBracketForAction((ActionType)idx, rule.Action.MoveWithin);
                     if (defaultBracket.HasValue) rule.Action.MoveWithin = defaultBracket.Value;
+                    rule.Action.DebuffGroup = DebuffDefaults.GroupFor((ActionType)idx, rule.Action.DebuffGroup);
+                    if ((ActionType)idx == ActionType.CastDebuffGroup) {
+                        // Metamagic rod and reservoir boost belong to CastSpell; a debuff cast never applies them.
+                        rule.Action.MetamagicRod = null;
+                        rule.Action.Reservoir = ReservoirBoost.None;
+                        rule.Action.Sources = DebuffDefaults.SourcesFor(ActionType.CastDebuffGroup, rule.Action.Sources);
+                    }
                     if ((ActionType)idx != ActionType.CastSpell
-                        && (ActionType)idx != ActionType.CastAbility) {
+                        && (ActionType)idx != ActionType.CastAbility
+                        && (ActionType)idx != ActionType.CastDebuffGroup) {
                         rule.Action.Sources = SpellSourceMask.All;
                         rule.Action.FallbackAbilityIds?.Clear();
                     }
@@ -106,6 +114,11 @@ namespace WrathTactics.UI {
                     rule.Action.HealSources = sourceValues[idx];
                     PersistEdit();
                 });
+                return;
+            }
+
+            if (rule.Action.Type == ActionType.CastDebuffGroup) {
+                SetupDebuffGroupSelectors(row);
                 return;
             }
 
@@ -211,11 +224,62 @@ namespace WrathTactics.UI {
             // Hide if not applicable
             bool showSelector = rule.Action.Type != ActionType.AttackTarget &&
                                 rule.Action.Type != ActionType.DoNothing &&
+                                rule.Action.Type != ActionType.CastDebuffGroup &&
+                                rule.Action.Type != ActionType.CastConditionOption &&
                                 rule.Action.Type != ActionType.ThrowSplash &&
                                 rule.Action.Type != ActionType.SwitchWeaponSet &&
                                 !ActionValidator.IsWalkAction(rule.Action.Type);
             if (spellPickerButton != null)
                 spellPickerButton.SetActive(showSelector);
+        }
+
+        // CastDebuffGroup: group dropdown (11 debuff groups + a final "Heal" entry that switches the
+        // action to Heal) and a Sources dropdown. Sources reuses SpellSourceMask; potions never
+        // qualify as debuffs, so the Potion-only combinations are left out of the list.
+        void SetupDebuffGroupSelectors(GameObject row) {
+            var groups = new List<DebuffGroup> {
+                DebuffGroup.ArmorClass, DebuffGroup.Attack, DebuffGroup.Damage,
+                DebuffGroup.SaveWill, DebuffGroup.SaveReflex, DebuffGroup.SaveFortitude,
+                DebuffGroup.Dexterity, DebuffGroup.Strength, DebuffGroup.Constitution,
+                DebuffGroup.Speed, DebuffGroup.Incapacitated,
+            };
+            var groupLabels = new List<string>();
+            foreach (var g in groups) groupLabels.Add(EnumLabels.For(g));
+            groupLabels.Add("action.debuffgroup.heal".i18n());
+            int groupIdx = groups.IndexOf(rule.Action.DebuffGroup);
+            if (groupIdx < 0) groupIdx = 0;
+            PopupSelector.CreateInRow(row, "DebuffGroup", 0.39f, groupLabels, groupIdx, idx => {
+                if (idx == groups.Count) {
+                    rule.Action.Type = ActionType.Heal;
+                    rule.Action.AbilityId = "";
+                    rule.Action.Sources = SpellSourceMask.All;
+                    rule.Action.DebuffGroup = DebuffGroup.None;
+                    var healTarget = TargetDefaults.ForHealFromDebuff(rule.Target.Type);
+                    if (healTarget.HasValue) rule.Target.Type = healTarget.Value;
+                    PersistEdit();
+                    RebuildBody();
+                    return;
+                }
+                rule.Action.DebuffGroup = groups[idx];
+                PersistEdit();
+            });
+
+            var sourceLabels = new List<string> {
+                "source.all".i18n(), "source.spell_only".i18n(), "source.scroll_only".i18n(),
+                "source.spell_scroll".i18n(),
+            };
+            var sourceValues = new List<SpellSourceMask> {
+                SpellSourceMask.All,
+                SpellSourceMask.Spell,
+                SpellSourceMask.Scroll,
+                SpellSourceMask.Spell | SpellSourceMask.Scroll,
+            };
+            int srcIdx = sourceValues.IndexOf(rule.Action.Sources);
+            if (srcIdx < 0) srcIdx = 0;
+            PopupSelector.CreateInRow(row, "DebuffSources", 0.22f, sourceLabels, srcIdx, idx => {
+                rule.Action.Sources = sourceValues[idx];
+                PersistEdit();
+            });
         }
 
         // Builds the spell-picker button (icon + label + arrow) that opens SpellPickerOverlay
@@ -381,6 +445,7 @@ namespace WrathTactics.UI {
             if (actionType == ActionType.Heal || actionType == ActionType.ThrowSplash
                 || actionType == ActionType.ToggleActivatable
                 || actionType == ActionType.CastSpell || actionType == ActionType.CastAbility
+                || actionType == ActionType.CastDebuffGroup || actionType == ActionType.CastConditionOption
                 || actionType == ActionType.SwitchWeaponSet || ActionValidator.IsWalkAction(actionType)) {
                 RebuildBody();
                 return;
@@ -390,6 +455,8 @@ namespace WrathTactics.UI {
 
             bool showSpell = actionType != ActionType.AttackTarget &&
                              actionType != ActionType.DoNothing &&
+                             actionType != ActionType.CastDebuffGroup &&
+                             actionType != ActionType.CastConditionOption &&
                              actionType != ActionType.ThrowSplash &&
                              actionType != ActionType.SwitchWeaponSet &&
                              !ActionValidator.IsWalkAction(actionType);
@@ -433,6 +500,7 @@ namespace WrathTactics.UI {
         List<SpellDropdownProvider.SpellEntry> GetSpellEntries(ActionType actionType) {
             if (actionType == ActionType.AttackTarget || actionType == ActionType.DoNothing
                 || actionType == ActionType.Heal || actionType == ActionType.ThrowSplash
+                || actionType == ActionType.CastDebuffGroup || actionType == ActionType.CastConditionOption
                 || actionType == ActionType.SwitchWeaponSet || ActionValidator.IsWalkAction(actionType))
                 return new List<SpellDropdownProvider.SpellEntry>();
 

@@ -8,7 +8,7 @@ namespace WrathTactics.Engine {
     public static partial class ConditionEvaluator {
         static bool EvaluateEnemyBucket(List<Condition> conds, UnitEntityData owner) {
             var enemies = GetVisibleEnemies(owner).ToList();
-            var nonCountConds = conds.Where(c => c.Subject != ConditionSubject.EnemyCount).ToList();
+            var nonCountConds = BundleOptionRows(conds.Where(c => c.Subject != ConditionSubject.EnemyCount).ToList());
             var countConds    = conds.Where(c => c.Subject == ConditionSubject.EnemyCount).ToList();
 
             // Count-only groups stay evaluable with zero visible enemies so
@@ -27,6 +27,10 @@ namespace WrathTactics.Engine {
                     ? enemies.OrderByDescending(metric)
                     : enemies.OrderBy(metric);
             }
+
+            // A Pick subject fixes the visiting order (nearest, highest threat, ...); rotating it would break that
+            // contract, so a capped pass under a Pick resumes from the Pick order again (documented limitation).
+            if (pickCond == null) ordered = RotateToOptionCursor(ordered, nonCountConds);
 
             // Pick-or-Enemy path: find first enemy that passes every non-Count condition.
             UnitEntityData matchedEnemy = null;
@@ -47,9 +51,17 @@ namespace WrathTactics.Engine {
             // set with its own threshold/operator. All sets must hold (see CountSet).
             if (countConds.Count > 0) {
                 var sets = CountSet.Build(countConds);
-                var tally = CountSets.Tally(enemies, sets,
-                    enemy => nonCountConds.All(c => EvaluateUnitProperty(c, enemy)),
-                    MatchesPropertyThreshold);
+                // The count has to see every enemy, so the option pair cap is off here
+                // (the bundle is evaluated per enemy inside the Tally base filter).
+                s_optionEnforceCap = false;
+                CountTally<UnitEntityData> tally;
+                try {
+                    tally = CountSets.Tally(enemies, sets,
+                        enemy => nonCountConds.All(c => EvaluateUnitProperty(c, enemy)),
+                        MatchesPropertyThreshold);
+                } finally {
+                    s_optionEnforceCap = true;
+                }
                 if (!CountSets.AllPass(sets, tally.Counts)) {
                     Log.Engine.Trace($"EnemyBucket miss: {DescribeCountSets(sets, tally.Counts)}");
                     return false;
