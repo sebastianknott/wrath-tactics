@@ -189,7 +189,7 @@ Every term in the rule editor, in UI order. All checks are **snapshots**: a cond
 |---|---|
 | **Self** | The companion this rule belongs to. |
 | **Ally** | *Any one* party member or pet other than Self. Several Ally rows in the same group must all be true for the **same** ally. |
-| **AllyCount** | Counts allies other than Self that satisfy the property; the count is compared with the number on the right (`>= 1`, `< 3`, …). |
+| **AllyCount** | Counts allies other than Self that satisfy the property; the count is compared with the number on the right (`>= 1`, `< 3`, …). The trace log lists each ally that fails a row with the value it measured, e.g. `count HpPercent LessThan 40 (actual 79)`. |
 | **Enemy** | *Any one* visible, living enemy currently in combat with the party. Several Enemy rows in a group must all be true for the **same** enemy. |
 | **EnemyCount** | Counts those enemies; `EnemyCount = 0` is a valid gate ("no enemy in combat"). |
 | **Enemy: biggest / lowest threat** | Scans enemies in that order (threat ≈ attack bonus + expected damage per hit) and takes the first one that passes the row's property. Also decides which enemy **Condition target** points at. |
