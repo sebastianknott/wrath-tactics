@@ -278,7 +278,7 @@ Every term in the rule editor, in UI order. All checks are **snapshots**: a cond
 |---|---|
 | **Self** | The companion itself. |
 | **Ally: lowest HP** | Party member or pet (not Self) with the lowest HP%. |
-| **Ally with condition** | First ally (not Self) with the chosen condition. |
+| **Ally with condition** | First ally (not Self) with the chosen condition. You pick the condition from the same list as **HasCondition**. |
 | **Ally missing buff** | First ally (not Self) without the chosen buff. |
 | **Specific ally** | One pinned companion or pet. |
 | **Ally: most clustered (5 m)** | The ally with the most other living allies within 5 m — for area buffs. |
