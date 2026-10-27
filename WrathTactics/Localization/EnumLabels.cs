@@ -39,7 +39,7 @@ namespace WrathTactics.Localization {
             "Blinded", "Prone", "Entangled", "Exhausted", "Fatigued",
             "Shaken", "Sickened", "Sleeping", "Petrified",
             "Slowed", "Staggered", "Dazed", "Dazzled", "Helpless",
-            "Cowering", "DeathDoor",
+            "Cowering", "DeathDoor", "Dominated", "Charmed",
         };
 
         // SpellDescriptor names for HasDescriptorEffect — statuses tracked as descriptor-flagged
