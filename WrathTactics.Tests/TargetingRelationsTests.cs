@@ -54,6 +54,45 @@ namespace WrathTactics.Tests {
         }
 
         [Fact]
+        public void Group_filter_matches_cast_in_that_group() {
+            Assert.True(TargetingRelations.MatchesAbilityFilter("group:Healing", Heal, null, AbilityGroup.Healing));
+            Assert.True(TargetingRelations.MatchesAbilityFilter("group:Control", Heal, null,
+                AbilityGroup.Control | AbilityGroup.Damage));
+        }
+
+        [Fact]
+        public void Group_filter_does_not_match_other_group_or_none() {
+            Assert.False(TargetingRelations.MatchesAbilityFilter("group:Healing", Heal, null, AbilityGroup.Control));
+            Assert.False(TargetingRelations.MatchesAbilityFilter("group:Healing", Heal, null));
+        }
+
+        [Fact]
+        public void Group_filter_does_not_fall_back_to_guid_comparison() {
+            Assert.False(TargetingRelations.MatchesAbilityFilter("group:Healing", "group:Healing", null));
+        }
+
+        [Theory]
+        [InlineData("group:Bogus")]
+        [InlineData("group:")]
+        [InlineData("group:Healing|Control")]
+        [InlineData("GROUP:Healing")]
+        public void Unknown_group_key_matches_nothing(string filter) {
+            Assert.False(TargetingRelations.MatchesAbilityFilter(filter, Heal, null,
+                AbilityGroup.Healing | AbilityGroup.Control | AbilityGroup.Damage));
+        }
+
+        [Fact]
+        public void Guid_filter_ignores_groups() {
+            Assert.False(TargetingRelations.MatchesAbilityFilter(Other, Heal, null, AbilityGroup.Healing));
+            Assert.True(TargetingRelations.MatchesAbilityFilter(Heal, Heal, null, AbilityGroup.None));
+        }
+
+        [Fact]
+        public void Empty_filter_matches_regardless_of_groups() {
+            Assert.True(TargetingRelations.MatchesAbilityFilter("", Heal, null, AbilityGroup.None));
+        }
+
+        [Fact]
         public void HasCast_without_units_is_false() {
             Assert.False(TargetingRelations.HasCast(null, null, ""));
         }

@@ -334,10 +334,15 @@ namespace WrathTactics.Engine {
         /// searched; with Negative-energy detection added, the substring is replaced by the
         /// full bigram in each table.
         /// </summary>
-        static HealEnergyType ClassifyHeal(BlueprintAbility blueprint) {
+        internal static HealEnergyType ClassifyHeal(BlueprintAbility blueprint) {
             if (blueprint == null) return HealEnergyType.None;
-            string n = (blueprint.name ?? "").ToLowerInvariant();
-            string d = (blueprint.Name ?? "").ToLowerInvariant();
+            return ClassifyHealByName(blueprint.name, blueprint.Name);
+        }
+
+        /// <summary>Pure core of <see cref="ClassifyHeal"/>: internal and display name in, energy type out.</summary>
+        internal static HealEnergyType ClassifyHealByName(string internalName, string displayName) {
+            string n = (internalName ?? "").ToLowerInvariant();
+            string d = (displayName ?? "").ToLowerInvariant();
 
             // Negative first: defence-in-depth against future Positive-keyword changes that
             // might overlap (e.g. "channel" alone). The current Positive table requires
