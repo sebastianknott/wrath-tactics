@@ -105,6 +105,8 @@ namespace WrathTactics.Engine {
                     abilitySlot = choice.Value.Option.Ability.RuntimeActionType;
                     return true;
                 }
+                case ActionType.RemoveCondition:
+                    return unit != null && CanExecuteCleanse(owner, unit, action.CleanseKinds, action.Sources, out abilitySlot);
                 case ActionType.CastConditionOption: {
                     if (!CanExecuteConditionOption(owner, unit, out var optionChoice)) return false;
                     DebuffSelection.Remember(owner, unit, optionChoice);
