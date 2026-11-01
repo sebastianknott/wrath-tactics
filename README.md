@@ -192,6 +192,7 @@ Every term in the rule editor, in UI order. All checks are **snapshots**: a cond
 - In combat the lists are re-evaluated every ~3 s (configurable), out of combat every ~2 s — but out of combat only for rules carrying `Combat → IsInCombat → No`.
 - **Cooldown (rounds)**: after the rule fires, it stays quiet for that many 6-second rounds. `0` = may fire every tick.
 - **Once per combat**: in combat, the rule fires at most once per companion for each fight. The next combat arms it again. Out of combat the box has no effect, and the cooldown keeps applying as set.
+- **Uninterruptible (no other rule may cancel it)**: while this rule's standard-action command (cast, attack, item) is queued or running, no other rule may replace it, not even a rule above it. Move rules and toggle rules wait too, since they would cancel it. Swift and free actions from other rules stay allowed. The protection ends after 18 s (3 rounds) at the latest, so a command that never starts cannot lock the unit out.
 - **Enabled**: unticked rules are skipped entirely.
 
 ### Condition subjects (who is checked)
