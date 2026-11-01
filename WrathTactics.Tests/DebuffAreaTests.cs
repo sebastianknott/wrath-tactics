@@ -9,7 +9,7 @@ namespace WrathTactics.Tests {
         // Pinned per branch: patched appends other ConditionProperty members first (local-fixups.sh rewrites these).
         [Fact]
         public void OptionEnemiesInRadius_property_index_is_stable() {
-            Assert.Equal(39, (int)ConditionProperty.OptionEnemiesInRadius);
+            Assert.Equal(43, (int)ConditionProperty.OptionEnemiesInRadius);
         }
 
         static readonly Vector3[] Cluster = {
