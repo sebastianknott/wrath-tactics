@@ -137,6 +137,7 @@ namespace WrathTactics.Engine {
                 var copy = Newtonsoft.Json.JsonConvert.DeserializeObject<TacticsRule>(json);
                 rule.Name = copy.Name;
                 rule.CooldownRounds = copy.CooldownRounds;
+                rule.OncePerCombat = copy.OncePerCombat;
                 rule.ConditionGroups = copy.ConditionGroups;
                 rule.Action = copy.Action;
                 rule.Target = copy.Target;

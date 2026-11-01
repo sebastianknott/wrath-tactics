@@ -61,6 +61,7 @@
   "ally.picker.any": "(Any ally)",
 
   "cooldown.label": "Cooldown (rounds):",
+  "cooldown.once_per_combat": "Once per combat",
 
   "default.new_rule_name": "New Rule",
   "clone.suffix": " (copy)",
