@@ -163,6 +163,8 @@
   "condition.slotMinCount": "Min. count",
   "condition.resourceGuid": "Resource GUID",
   "condition.resourceAmount": "Amount",
+  "condition.count.shared": "together",
+  "condition.count.own": "own count",
   "bool.yes": "Yes",
   "bool.no": "No",
   "condition.resistAmount": "Min. resistance",

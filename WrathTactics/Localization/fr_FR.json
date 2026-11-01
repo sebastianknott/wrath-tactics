@@ -163,6 +163,8 @@
   "condition.slotMinCount": "Nb min.",
   "condition.resourceGuid": "GUID ressource",
   "condition.resourceAmount": "Quantité",
+  "condition.count.shared": "groupé",
+  "condition.count.own": "compte propre",
   "bool.yes": "Oui",
   "bool.no": "Non",
   "condition.resistAmount": "Résist. min.",
