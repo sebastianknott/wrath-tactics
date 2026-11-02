@@ -8,6 +8,8 @@ using WrathTactics.Models;
 namespace WrathTactics.Engine {
     public static partial class ConditionEvaluator {
         static bool EvaluateUnitProperty(Condition condition, UnitEntityData unit) {
+            if (condition is OptionRowsBundle bundle) return EvaluateOptionBundle(bundle, unit);
+
             float threshold;
             float.TryParse(condition.Value, System.Globalization.NumberStyles.Any,
                 System.Globalization.CultureInfo.InvariantCulture, out threshold);

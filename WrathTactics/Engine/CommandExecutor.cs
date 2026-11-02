@@ -22,6 +22,10 @@ namespace WrathTactics.Engine {
                     case ActionType.CastSpell:
                     case ActionType.CastAbility:
                         return ExecuteCastSpell(action, owner, target, out issuedCommand);
+                    case ActionType.CastDebuffGroup:
+                        return ExecuteDebuffGroup(action, owner, target, out issuedCommand);
+                    case ActionType.CastConditionOption:
+                        return ExecuteConditionOption(action, owner, target, out issuedCommand);
                     case ActionType.UseItem:
                         return ExecuteUseItem(action.AbilityId, owner, target, out issuedCommand);
                     case ActionType.ToggleActivatable:
@@ -129,6 +133,47 @@ namespace WrathTactics.Engine {
             if (isFallback)
                 Log.Engine.Info($"CastSpell fallback hit for {owner.CharacterName}: primary={action.AbilityId} -> used={usedAbilityId}");
 
+            return IssueAbility(action, owner, ability, inventorySource, target, out issuedCommand);
+        }
+
+        // CastDebuffGroup: casts the option the validator ranked in this same rule check. A latch miss (the
+        // validator and executor must not disagree, but a stale latch is possible) recomputes once.
+        static bool ExecuteDebuffGroup(ActionDef action, UnitEntityData owner, ResolvedTarget target, out UnitCommand issuedCommand) {
+            issuedCommand = null;
+            var unit = target.Unit;
+            if (unit == null) return false;
+            var choice = DebuffSelection.Take(owner, unit);
+            if (choice == null) {
+                Log.Engine.Warn($"DebuffGroup {action.DebuffGroup}: no latched option for {owner.CharacterName} -> {unit.CharacterName}, recomputing");
+                choice = ActionValidator.FindBestDebuff(owner, unit, action);
+                if (choice == null) return false;
+            }
+            var option = choice.Value.Option;
+            Log.Engine.Info($"DebuffGroup {action.DebuffGroup}: {owner.CharacterName} casts '{option.Name}' [{option.Kind}] on {unit.CharacterName} (EV {choice.Value.Ev:F2})");
+            return IssueAbility(action, owner, option.Ability, option.InventorySource, target, out issuedCommand);
+        }
+
+        // CastConditionOption: casts the option latched by the GroupOption condition rows. The validator handed it
+        // over through DebuffSelection; a miss falls back to the condition latch once, never to a fresh search.
+        static bool ExecuteConditionOption(ActionDef action, UnitEntityData owner, ResolvedTarget target, out UnitCommand issuedCommand) {
+            issuedCommand = null;
+            var unit = target.Unit;
+            if (unit == null) return false;
+            var choice = DebuffSelection.Take(owner, unit);
+            if (choice == null) {
+                Log.Engine.Warn($"CastConditionOption: no latched option for {owner.CharacterName} -> {unit.CharacterName}, reading the condition latch");
+                if (!ActionValidator.CanExecuteConditionOption(owner, unit, out var latched)) return false;
+                choice = latched;
+            }
+            var option = choice.Value.Option;
+            Log.Engine.Info($"CastConditionOption: {owner.CharacterName} casts '{option.Name}' [{option.Kind}] on {unit.CharacterName} (EV {choice.Value.Ev:F2})");
+            return IssueAbility(action, owner, option.Ability, option.InventorySource, target, out issuedCommand);
+        }
+
+        // Shared issue path of every ability-backed cast: rod, inventory consumption, reservoir, animated command.
+        static bool IssueAbility(ActionDef action, UnitEntityData owner, AbilityData ability, ItemEntity inventorySource,
+                                 ResolvedTarget target, out UnitCommand issuedCommand) {
+            issuedCommand = null;
             var targetWrapper = BuildTargetWrapper(target, owner);
 
             // Rod activation (no-op when action.MetamagicRod == null or no rod matches).

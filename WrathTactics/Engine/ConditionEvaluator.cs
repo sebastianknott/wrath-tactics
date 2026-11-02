@@ -31,6 +31,7 @@ namespace WrathTactics.Engine {
         // (matches HpPercent/AC shape). A stray access outside an active Evaluate
         // reads null and falls through to float.NaN → condition returns false.
         static ActionDef CurrentAction;
+        static string CurrentRuleId;
         static UnitEntityData CurrentOwner;
         // Per-(attacker, enemy) attack-bonus cache for a single Evaluate call. AB is
         // computed with RuleCalculateAttackBonus against the enemy (shoot-into-melee,
@@ -48,6 +49,8 @@ namespace WrathTactics.Engine {
             LastMatchedEnemy = null;
             LastMatchedAlly = null;
             LastMatchedSelf = null;
+            DebuffSelection.Clear();
+            ClearOptionLatch();
         }
 
         public static bool Evaluate(TacticsRule rule, UnitEntityData owner) {
@@ -55,7 +58,9 @@ namespace WrathTactics.Engine {
                 return true;
 
             CurrentAction = rule.Action;
+            CurrentRuleId = rule.Id;
             CurrentOwner = owner;
+            BeginOptionPass();
             try {
                 foreach (var group in rule.ConditionGroups) {
                     if (EvaluateGroup(group, owner))
@@ -63,7 +68,9 @@ namespace WrathTactics.Engine {
                 }
                 return false;
             } finally {
+                EndOptionPass();
                 CurrentAction = null;
+                CurrentRuleId = null;
                 CurrentOwner = null;
                 CurrentABCache.Clear();
                 CurrentPartyMaxLevel = -1;
@@ -268,6 +275,7 @@ namespace WrathTactics.Engine {
                 case ConditionSubject.EnemyHighestHD:
                 case ConditionSubject.EnemyLowestHD:
                 case ConditionSubject.EnemyNearest:
+                case ConditionSubject.GroupOption:
                     return true;
                 default:
                     return false;

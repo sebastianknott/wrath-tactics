@@ -10,6 +10,8 @@ namespace WrathTactics.Tests {
         [InlineData(ActionType.CastAbility)]
         [InlineData(ActionType.UseItem)]
         [InlineData(ActionType.Heal)]
+        [InlineData(ActionType.CastDebuffGroup)]
+        [InlineData(ActionType.CastConditionOption)]
         public void ability_backed_types_use_the_supplied_ability_slot(ActionType type) {
             Assert.Equal(UnitCommand.CommandType.Swift,
                 ActionSlots.Classify(type, UnitCommand.CommandType.Swift));
@@ -26,6 +28,8 @@ namespace WrathTactics.Tests {
         [InlineData(ActionType.CastAbility)]
         [InlineData(ActionType.UseItem)]
         [InlineData(ActionType.Heal)]
+        [InlineData(ActionType.CastDebuffGroup)]
+        [InlineData(ActionType.CastConditionOption)]
         public void ability_backed_types_fall_back_to_standard_when_slot_unknown(ActionType type) {
             Assert.Equal(UnitCommand.CommandType.Standard, ActionSlots.Classify(type, null));
         }
@@ -76,6 +80,8 @@ namespace WrathTactics.Tests {
         [InlineData(ActionType.CastAbility, true)]
         [InlineData(ActionType.UseItem, true)]
         [InlineData(ActionType.Heal, true)]
+        [InlineData(ActionType.CastDebuffGroup, true)]
+        [InlineData(ActionType.CastConditionOption, true)]
         [InlineData(ActionType.AttackTarget, true)]
         [InlineData(ActionType.ThrowSplash, false)]   // Rulebook.Trigger, no command
         [InlineData(ActionType.SwitchWeaponSet, false)]
