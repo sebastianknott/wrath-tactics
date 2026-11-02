@@ -238,7 +238,7 @@ namespace WrathTactics.Engine {
                         CountAvailableSlotsAboveLevel(unit, minLevel), condition);
 
                 case ConditionProperty.Resource:
-                    return HasResource(unit, condition.Value);
+                    return EvaluateResource(condition, unit);
 
                 case ConditionProperty.CreatureType:
                     bool ctMatch = CheckCreatureType(unit, condition.Value);
@@ -452,6 +452,9 @@ namespace WrathTactics.Engine {
                     bool resists = HasEnergyResistance(unit, condition.Value);
                     return condition.Operator == ConditionOperator.NotEqual ? !resists : resists;
                 }
+
+                case ConditionProperty.Resource:
+                    return EvaluateResource(condition, unit);
 
                 case ConditionProperty.CreatureType:
                     bool ctMatch2 = CheckCreatureType(unit, condition.Value);
