@@ -57,6 +57,9 @@ namespace WrathTactics.Models {
         [JsonProperty] public List<string> FallbackAbilityIds { get; set; } = new();
         // CastDebuffGroup: the effect group whose strongest ally-safe option is cast (WTW-30). None on legacy rules.
         [JsonProperty] public DebuffGroup DebuffGroup { get; set; } = DebuffGroup.None;
+        // RemoveCondition: the afflictions the rule cures (WTW-30 cleanse). None (legacy / fresh rule) never fires;
+        // the editor ticks every kind when the action is chosen (CleanseDefaults.KindsFor).
+        [JsonProperty] public AfflictionKinds CleanseKinds { get; set; } = AfflictionKinds.None;
         [JsonProperty] public HealMode HealMode { get; set; } = HealMode.Any;
         [JsonProperty] public HealSourceMask HealSources { get; set; } = HealSourceMask.All;
         [JsonProperty] public HealEnergyType HealEnergy { get; set; } = HealEnergyType.Auto;
