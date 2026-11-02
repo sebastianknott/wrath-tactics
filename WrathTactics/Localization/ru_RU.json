@@ -206,6 +206,7 @@
   "enum.property.IsInCombat": "В бою",
   "enum.property.HitDice": "Кости здоровья",
   "enum.property.SpellDCMinusSave": "СЛ − Спасбросок",
+  "enum.property.SpellResistMargin": "Пробитие − СЗ",
   "enum.property.HasClass": "Есть класс",
   "enum.property.WithinRange": "В радиусе",
   "enum.property.ABMinusAC": "Запас попадания (БА − КБ)",
