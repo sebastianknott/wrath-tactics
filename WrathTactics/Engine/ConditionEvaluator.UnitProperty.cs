@@ -256,6 +256,9 @@ namespace WrathTactics.Engine {
                     return resMatch;
                 }
 
+                case ConditionProperty.HasAffliction:
+                    return CleanseAfflictionReader.Matches(CleanseAfflictionReader.Read(unit), condition.Value, condition.Operator);
+
                 case ConditionProperty.SpellSlotsAtLevel:
                     int level = (int)threshold;
                     return TraceSlotCount("SpellSlotsAtLevel", unit, level,
@@ -501,6 +504,9 @@ namespace WrathTactics.Engine {
 
                 case ConditionProperty.Resource:
                     return EvaluateResource(condition, unit);
+
+                case ConditionProperty.HasAffliction:
+                    return CleanseAfflictionReader.Matches(CleanseAfflictionReader.Read(unit), condition.Value, condition.Operator);
 
                 case ConditionProperty.CreatureType:
                     bool ctMatch2 = CheckCreatureType(unit, condition.Value);
