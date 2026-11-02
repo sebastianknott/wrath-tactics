@@ -74,6 +74,7 @@ namespace WrathTactics.Engine {
                 CurrentOwner = null;
                 CurrentABCache.Clear();
                 CurrentPartyMaxLevel = -1;
+                ResetPartyMedian();
             }
         }
 
