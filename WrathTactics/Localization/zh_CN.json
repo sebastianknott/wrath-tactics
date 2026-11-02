@@ -163,6 +163,8 @@
   "condition.slotMinCount": "最少数量",
   "condition.resourceGuid": "资源GUID",
   "condition.resourceAmount": "数量",
+  "condition.count.shared": "合并计数",
+  "condition.count.own": "独立计数",
   "bool.yes": "是",
   "bool.no": "否",
   "condition.resistAmount": "最低抗性",
