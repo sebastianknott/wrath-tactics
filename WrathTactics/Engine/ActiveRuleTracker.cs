@@ -20,6 +20,8 @@ namespace WrathTactics.Engine {
             public RuleListSource Source;
             public string EntryId;
             public UnitCommand Command;
+            /// <summary>Game time the command was recorded at (feeds InterruptProtection's time cap).</summary>
+            public float RecordedAtSec;
         }
 
         public struct Resolution {
@@ -31,16 +33,19 @@ namespace WrathTactics.Engine {
             public int GlobalGate;
             /// <summary>Exclusive upper bound for the character-rules iteration.</summary>
             public int CharGate;
+            /// <summary>Index of the active entry in its own list (-1 when Stale).</summary>
+            public int ActiveIndex;
         }
 
         static readonly Dictionary<string, Entry> activeByUnit = new Dictionary<string, Entry>();
 
-        public static void Record(UnitEntityData unit, RuleListSource source, string entryId, UnitCommand cmd) {
+        public static void Record(UnitEntityData unit, RuleListSource source, string entryId, UnitCommand cmd, float gameTimeSec = 0f) {
             if (unit == null || cmd == null || string.IsNullOrEmpty(entryId)) return;
             activeByUnit[unit.UniqueId] = new Entry {
                 Source = source,
                 EntryId = entryId,
                 Command = cmd,
+                RecordedAtSec = gameTimeSec,
             };
         }
 
@@ -108,14 +113,15 @@ namespace WrathTactics.Engine {
             if (idx < 0) {
                 return new Resolution {
                     Stale = true,
+                    ActiveIndex = -1,
                     GlobalGate = int.MaxValue,
                     CharGate = int.MaxValue,
                 };
             }
             if (activeSource == RuleListSource.Global) {
-                return new Resolution { GlobalGate = idx, CharGate = 0 };
+                return new Resolution { GlobalGate = idx, CharGate = 0, ActiveIndex = idx };
             }
-            return new Resolution { GlobalGate = int.MaxValue, CharGate = idx };
+            return new Resolution { GlobalGate = int.MaxValue, CharGate = idx, ActiveIndex = idx };
         }
     }
 }

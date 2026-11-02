@@ -27,6 +27,10 @@ namespace WrathTactics.UI {
                 rule.OncePerCombat = v;
                 PersistEdit();
             });
+            Widgets.Checkbox(parent, "Uninterruptible", "cooldown.uninterruptible".i18n(), rule.Uninterruptible, v => {
+                rule.Uninterruptible = v;
+                PersistEdit();
+            });
         }
     }
 }
