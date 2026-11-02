@@ -61,6 +61,7 @@
   "ally.picker.any": "(N'importe quel allié)",
 
   "cooldown.label": "Recharge (rounds) :",
+  "cooldown.once_per_combat": "Une fois par combat",
 
   "default.new_rule_name": "Nouvelle règle",
   "clone.suffix": " (copie)",
