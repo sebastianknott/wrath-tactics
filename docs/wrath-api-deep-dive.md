@@ -200,13 +200,13 @@ A new positional `ConditionProperty` (e.g. `IsFlanked`, `AdjacentEnemyCount`) ne
 
 ### `abminusac-condition`
 
-`ABMinusAC` evaluates `ab − enemy.AC` via `RuleCalculateAttackBonusWithoutTarget`. Enemy-scope only.
+`ABMinusAC` evaluates `ab − enemy.AC` where `ab` comes from `RuleCalculateAttackBonus(ally, enemy, weapon, 0)` (with target: shoot-into-melee, flanking, concealment). Enemy-scope only.
 
 `condition.Value2` is an optional ally `UniqueId` pin:
-- **Empty**: party-best AB across living members (`!IsFinallyDead`, `IsInGame`, has weapon / `EmptyHandWeapon`). Cached rule-scoped via `CurrentPartyBestAB`.
-- **Set**: `AllyProvider.Resolve` and use only that ally's AB. Uncached — pin is per-rule, single-pinned-AB per enemy is cheap.
+- **Empty**: party-best AB across living members (`!IsFinallyDead`, `IsInGame`, has weapon / `EmptyHandWeapon`). Best AB is picked per enemy; `ComputeAB` results are cached per (attacker, enemy) in `CurrentABCache`, reset per Evaluate.
+- **Set**: `AllyProvider.Resolve` and use only that ally's AB (same cache).
 
-Per-ally helper `ComputeAB(ally)` returns `int.MinValue` on ineligible.
+Per-ally helper `ComputeAB(ally, enemy)` returns `AbMargin.NoAb` (`int.MinValue`) on ineligible.
 
 UI: `ConditionRowWidget` renders an `ABAllyPin` ally-picker (`allowAny=true`) when `Property == ABMinusAC`.
 
