@@ -3,6 +3,7 @@ using System.Linq;
 using Kingmaker.EntitySystem.Entities;
 using Kingmaker.UnitLogic.Commands;
 using Kingmaker.UnitLogic.Commands.Base;
+using WrathTactics.Logging;
 
 namespace WrathTactics.Engine {
     /// <summary>
@@ -41,7 +42,7 @@ namespace WrathTactics.Engine {
         /// <see cref="Has"/> this ignores melee engagement and plain attacks, so a sword swing
         /// never counts as "being cast on". Used by IsBeingCastOnByAlly.
         /// </summary>
-        /// <param name="abilityGuid">Blueprint GUID filter; empty = any ability.</param>
+        /// <param name="abilityGuid">Blueprint GUID or "group:&lt;Key&gt;" filter; empty = any ability.</param>
         public static bool HasCast(UnitEntityData caster, UnitEntityData victim, string abilityGuid) {
             if (caster == null || victim == null || caster == victim)
                 return false;
@@ -62,18 +63,29 @@ namespace WrathTactics.Engine {
             if (command == null || command.IsFinished) return false;
             if (!(command is UnitUseAbility cast) || cast.TargetUnit != victim) return false;
             var ability = cast.Ability;
-            return MatchesAbilityFilter(abilityGuid,
-                ability?.Blueprint?.AssetGuid.ToString(),
-                ability?.ConvertedFrom?.Blueprint?.AssetGuid.ToString());
+            var castGuid = ability?.Blueprint?.AssetGuid.ToString();
+            var convertedFromGuid = ability?.ConvertedFrom?.Blueprint?.AssetGuid.ToString();
+            // Variants and spontaneous conversions: a group matches if the cast OR its parent is in it.
+            var groups = AbilityGroups.Classify(ability?.Blueprint)
+                | AbilityGroups.Classify(ability?.ConvertedFrom?.Blueprint);
+            if (!string.IsNullOrEmpty(abilityGuid)) {
+                Log.Engine.Trace($"IsBeingCastOnByAlly: cast guid={castGuid} convertedFrom={convertedFromGuid} "
+                    + $"descriptor={ability?.Blueprint?.SpellDescriptor} groups={groups} filter={abilityGuid}");
+            }
+            return MatchesAbilityFilter(abilityGuid, castGuid, convertedFromGuid, groups);
         }
 
         /// <summary>
-        /// Pure ability filter: an empty filter matches any cast; otherwise the filter must equal
-        /// the cast blueprint's GUID or the GUID of the ability it was converted from (spell
-        /// variants, spontaneous conversion). Exact match only, never Contains.
+        /// Pure ability filter: an empty filter matches any cast; "group:&lt;Key&gt;" matches when
+        /// <paramref name="castGroups"/> contains that group; otherwise the filter must equal the cast
+        /// blueprint's GUID or the GUID of the ability it was converted from (spell variants,
+        /// spontaneous conversion). Exact match only, never Contains. A GUID filter ignores groups.
         /// </summary>
-        public static bool MatchesAbilityFilter(string filter, string castGuid, string convertedFromGuid) {
+        public static bool MatchesAbilityFilter(string filter, string castGuid, string convertedFromGuid,
+            AbilityGroup castGroups = AbilityGroup.None) {
             if (string.IsNullOrEmpty(filter)) return true;
+            if (AbilityGroups.IsGroupFilter(filter))
+                return AbilityGroups.TryParse(filter, out var wanted) && (castGroups & wanted) != 0;
             return string.Equals(filter, castGuid, StringComparison.OrdinalIgnoreCase)
                 || string.Equals(filter, convertedFromGuid, StringComparison.OrdinalIgnoreCase);
         }
