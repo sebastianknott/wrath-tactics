@@ -8,6 +8,8 @@ namespace WrathTactics.Tests {
         [Theory]
         [InlineData(ActionType.AttackTarget, TargetType.EnemyHighestThreat)]
         [InlineData(ActionType.ThrowSplash,  TargetType.EnemyHighestThreat)]
+        [InlineData(ActionType.CastDebuffGroup, TargetType.EnemyHighestThreat)]
+        [InlineData(ActionType.CastConditionOption, TargetType.ConditionTarget)]
         [InlineData(ActionType.MoveToTarget, TargetType.EnemyNearest)]
         [InlineData(ActionType.MoveAwayFromTarget, TargetType.EnemyNearest)]
         public void ForAction_replaces_Self_for_offensive_actions(ActionType action, TargetType expected) {
@@ -60,6 +62,23 @@ namespace WrathTactics.Tests {
         [Fact]
         public void ForAbility_never_overrides_an_explicit_choice() {
             Assert.Null(TargetDefaults.ForAbility(TargetType.AllyLowestHp, canTargetEnemies: true, canTargetFriends: false, canTargetSelf: false));
+        }
+    
+        [Theory]
+        [InlineData(TargetType.EnemyHighestThreat)]
+        [InlineData(TargetType.EnemyNearest)]
+        [InlineData(TargetType.EnemyMostEnemyNeighbors)]
+        public void ForHealFromDebuff_replaces_enemy_selectors_with_Self(TargetType current) {
+            Assert.Equal(TargetType.Self, TargetDefaults.ForHealFromDebuff(current));
+        }
+
+        [Theory]
+        [InlineData(TargetType.Self)]
+        [InlineData(TargetType.AllyLowestHp)]
+        [InlineData(TargetType.ConditionTarget)]
+        [InlineData(TargetType.SpecificAlly)]
+        public void ForHealFromDebuff_keeps_ally_and_condition_targets(TargetType current) {
+            Assert.Null(TargetDefaults.ForHealFromDebuff(current));
         }
     }
 }
