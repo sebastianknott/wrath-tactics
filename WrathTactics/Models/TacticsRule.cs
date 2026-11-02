@@ -39,6 +39,10 @@ namespace WrathTactics.Models {
         [JsonProperty] public ConditionOperator CountOperator { get; set; } = ConditionOperator.GreaterOrEqual;
         [JsonProperty] public string Value { get; set; } = "";
         [JsonProperty] public string Value2 { get; set; } = "";  // AllyCount/EnemyCount: count threshold; SpellSlots*: optional min slot count; Resource: optional amount (empty = legacy ">0"); HasEnergyResistance (non-count subjects): optional min resistance amount (empty = legacy ">0")
+        // AllyCount/EnemyCount only: true = this row is its own count with its own threshold and
+        // CountOperator, independent of the other count rows in the group. false (default, and
+        // legacy saves without the field) = rows share one count (unit must satisfy all of them).
+        [JsonProperty] public bool CountSeparately { get; set; }
     }
 
     public class ActionDef {
