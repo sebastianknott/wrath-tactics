@@ -133,6 +133,14 @@ namespace WrathTactics.Engine {
                 return;
             }
 
+            // A dominated companion fights for the enemy (ChangeFaction ToCaster) while staying in
+            // PartyAndPets: without this gate his rules kept firing on the party (1.33.0 log:
+            // Sosiel cast Hold Monster on Nenio and attacked himself via EnemyNearest).
+            if (ControlEffects.IsDominated(unit)) {
+                Log.Engine.Trace($"  Skip {unit.CharacterName}: dominated (rules suspended)");
+                return;
+            }
+
             var globalRules = config.GlobalRules;
             var charRules = config.GetRulesForCharacter(unit.UniqueId);
 
