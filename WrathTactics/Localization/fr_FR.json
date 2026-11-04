@@ -60,6 +60,7 @@
   "target.filter.ally": "Allié :",
   "ally.picker.any": "(N'importe quel allié)",
 
+  "cooldown.uninterruptible": "Non interruptible (aucune autre règle ne peut l'annuler)",
   "cooldown.label": "Recharge (rounds) :",
   "cooldown.once_per_combat": "Une fois par combat",
 
