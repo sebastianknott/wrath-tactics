@@ -164,6 +164,7 @@
   "condition.resourceAmount": "数量",
   "bool.yes": "是",
   "bool.no": "否",
+  "condition.resistAmount": "最低抗性",
 
   "enum.subject.Self": "自身",
   "enum.subject.Ally": "盟友",
