@@ -69,7 +69,8 @@ namespace WrathTactics.Models {
         IsVisible,                // Yes/No — unit.IsVisibleForPlayer (not in fog of war, view visible, in game): false for invisible/hidden enemies the party cannot see; Enemy-scope + EnemyCount
         OptionEffect,             // numeric — magnitude of the GroupOption's effect (stat penalty points, or expected lock rounds for Incapacitated); GroupOption only
         OptionSource,             // value-list — DebuffSourceKind name of the GroupOption (Spell/ClassAbility/…); =/!=; GroupOption only
-        OptionEnemiesInRadius     // numeric — enemies the GroupOption's option hits when cast at the enemy (area radius count, 1 for single/chain); GroupOption only
+        OptionEnemiesInRadius,    // numeric — enemies the GroupOption's option hits when cast at the enemy (area radius count, 1 for single/chain); GroupOption only
+        EnemyHDMinusPartyMedian   // numeric — enemyEffectiveHD − median effective level of the active party (WTW-33; mean of the two middle levels when the count is even) — Enemy-scope only; EnemyHDMinusPartyLevel keeps the maximum
     }
 
     public enum ConditionOperator {
