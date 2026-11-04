@@ -201,6 +201,7 @@ namespace WrathTactics.UI {
                     || condition.Property == ConditionProperty.EnemyHDMinusPartyLevel
                     || condition.Property == ConditionProperty.OptionEffect
                     || condition.Property == ConditionProperty.OptionEnemiesInRadius
+                    || condition.Property == ConditionProperty.EnemyHDMinusPartyMedian
                     || condition.Property == ConditionProperty.WithinRange
                     || condition.Property == ConditionProperty.AdjacentEnemyCount
                     || condition.Property == ConditionProperty.EngagedEnemyCount;
@@ -837,6 +838,7 @@ namespace WrathTactics.UI {
                         ConditionProperty.SpellResistMargin,
                         ConditionProperty.ABMinusAC,
                         ConditionProperty.EnemyHDMinusPartyLevel,
+                        ConditionProperty.EnemyHDMinusPartyMedian,
                         ConditionProperty.HasClass,
                         ConditionProperty.WithinRange,
                         ConditionProperty.IsTargetingSelf,
@@ -863,6 +865,7 @@ namespace WrathTactics.UI {
                         ConditionProperty.SpellResistMargin,
                         ConditionProperty.ABMinusAC,
                         ConditionProperty.EnemyHDMinusPartyLevel,
+                        ConditionProperty.EnemyHDMinusPartyMedian,
                         ConditionProperty.HasClass,
                         ConditionProperty.WithinRange,
                         ConditionProperty.IsBeingCastOnByAlly,
