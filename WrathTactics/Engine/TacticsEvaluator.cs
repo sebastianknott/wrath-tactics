@@ -141,6 +141,7 @@ namespace WrathTactics.Engine {
             // preempt. Lower-priority matches wait until the current command finishes.
             int globalGate = int.MaxValue;
             int charGate = int.MaxValue;
+            string protectedBy = null;
             RefundVanishedCommands(unit);
             var active = ActiveRuleTracker.GetActive(unit);
             if (active.HasValue) {
@@ -152,7 +153,17 @@ namespace WrathTactics.Engine {
                 } else {
                     globalGate = res.GlobalGate;
                     charGate = res.CharGate;
-                    Log.Engine.Trace($"  {unit.CharacterName}: active rule {active.Value.Source}/{active.Value.EntryId} -> gate G<{globalGate} C<{charGate}>");
+                    // Uninterruptible active rule: close the Standard gate for every rule
+                    // (the active one included, as before) and lock Move/toggle rules out.
+                    var activeList = active.Value.Source == RuleListSource.Global ? globalRules : charRules;
+                    var activeRule = PresetRegistry.Resolve(activeList[res.ActiveIndex]);
+                    if (InterruptProtection.IsActive(activeRule.Uninterruptible, active.Value.RecordedAtSec, gameTimeSec)) {
+                        globalGate = 0;
+                        charGate = 0;
+                        protectedBy = $"\"{activeRule.Name}\" ({active.Value.Source})";
+                    }
+                    Log.Engine.Trace($"  {unit.CharacterName}: active rule {active.Value.Source}/{active.Value.EntryId} -> gate G<{globalGate} C<{charGate}>"
+                        + (protectedBy != null ? $", uninterruptible: {protectedBy}" : ""));
                 }
             }
 
@@ -164,7 +175,7 @@ namespace WrathTactics.Engine {
             // standard-action rule in the character list within the same tick.
             // Toggle rules issue no command, so the slot budget cannot bound them. Bound them
             // per activatable instead — see the TogglesUsed check in TryExecuteRules.
-            var tick = new UnitTickState();
+            var tick = new UnitTickState { ProtectedBy = protectedBy };
 
             // TryExecuteRules now returns "stop evaluating this unit", not "something fired".
             if (TryExecuteRules(globalRules, unit, RuleListSource.Global, gameTimeSec, inCombat, globalGate, tick))
@@ -182,6 +193,9 @@ namespace WrathTactics.Engine {
             /// either would cancel the walk (paired slots), inverting the list priority
             /// (Nexus, 1.31.0: Cackle below the walk rule stopped the walk every tick).</summary>
             public string WalkHold;
+            /// <summary>Label of an active Uninterruptible rule; Move and toggle rules wait for it
+            /// (Standard rules are held back by the priority gate, which is then 0).</summary>
+            public string ProtectedBy;
         }
 
         // Returns true when evaluation of this unit must stop for the whole tick
@@ -259,6 +273,13 @@ namespace WrathTactics.Engine {
                 // Move/swift/free rules are exempt — that is the whole feature.
                 if (ActionSlots.IsGated(slot) && i >= priorityLimit) {
                     Log.Engine.Trace($"{unit.CharacterName} Rule {i} \"{rule.Name}\" ({source}): gated by active rule (limit {priorityLimit})");
+                    continue;
+                }
+
+                // Uninterruptible rule in flight: Standard rules are already gated (limit 0);
+                // a Move command (paired slot) or a toggle would still replace its command.
+                if (tick.ProtectedBy != null && InterruptProtection.Blocks(rule.Action.Type, slot)) {
+                    Log.Engine.Trace($"{unit.CharacterName} Rule {i} \"{rule.Name}\" ({source}): blocked by uninterruptible rule {tick.ProtectedBy}");
                     continue;
                 }
 
@@ -348,7 +369,7 @@ namespace WrathTactics.Engine {
                     // Only gated (Standard) rules go into the tracker, so its contents keep
                     // exactly their present meaning and ActiveRuleTracker stays untouched.
                     if (issuedCmd != null && ActionSlots.IsGated(slot)) {
-                        ActiveRuleTracker.Record(unit, source, entry.Id, issuedCmd);
+                        ActiveRuleTracker.Record(unit, source, entry.Id, issuedCmd, gameTimeSec);
                     }
                     // The walk holds its priority from the tick it is issued in. Without this
                     // a lower Standard rule fired in the same tick and cancelled the fresh walk

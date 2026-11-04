@@ -22,6 +22,8 @@ namespace WrathTactics.Models {
         /// A dangling PackId (pack deleted) is harmless — the rule keeps working, untinted.
         /// </summary>
         [JsonProperty] public string PackId { get; set; }
+        /// <summary>No other rule may replace this rule's Standard command (cast/attack) while it is queued or running; capped by InterruptProtection.MaxProtectedSeconds. Old JSON without the field loads as false.</summary>
+        [JsonProperty] public bool Uninterruptible { get; set; }
     }
 
     public class ConditionGroup {

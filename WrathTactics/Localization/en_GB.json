@@ -60,6 +60,7 @@
   "target.filter.ally": "Ally:",
   "ally.picker.any": "(Any ally)",
 
+  "cooldown.uninterruptible": "Uninterruptible (no other rule may cancel it)",
   "cooldown.label": "Cooldown (rounds):",
   "cooldown.once_per_combat": "Once per combat",
 
