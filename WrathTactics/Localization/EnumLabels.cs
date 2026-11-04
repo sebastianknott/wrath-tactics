@@ -14,6 +14,7 @@ namespace WrathTactics.Localization {
         public static string For(ThrowSplashMode v) => $"enum.splash_mode.{v}".i18n();
         public static string For(RangeBracket v) => $"enum.range.{v}".i18n();
         public static string For(HealEnergyType v) => $"enum.heal_energy.{v}".i18n();
+        public static string For(DebuffGroup v) => $"enum.debuffgroup.{v}".i18n();
 
         public static List<string> NamesFor<T>() where T : Enum {
             var values = (T[])Enum.GetValues(typeof(T));
@@ -55,6 +56,13 @@ namespace WrathTactics.Localization {
         public static List<string> KeysForEnergy() => new List<string> {
             "Fire", "Cold", "Electricity", "Acid", "Sonic",
         };
+
+        // DebuffSourceKind names for OptionSource — storage keys match the enum exactly (WTW-30).
+        public static List<string> KeysForDebuffSource() => new List<string> {
+            "Spell", "ClassAbility", "ItemAbility", "Scroll", "ThrownItem",
+        };
+
+        public static List<string> LabelsForDebuffSource() => Map(KeysForDebuffSource(), k => $"enum.debuffsource.{k}".i18n());
 
         public static List<string> LabelsForCreatureType() => Map(KeysForCreatureType(), k => $"enum.creature_type.{k}".i18n());
         public static List<string> LabelsForAlignment() => Map(KeysForAlignment(), k => $"enum.alignment.{k}".i18n());

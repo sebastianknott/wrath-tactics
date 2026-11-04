@@ -213,7 +213,7 @@ namespace WrathTactics.Engine {
         /// an activation check. GetAvailableForCastSpellCount handles prepared, spontaneous,
         /// Arcanist-hybrid, and opposition-school cases uniformly.
         /// </summary>
-        static bool CanCastSpellFromSpellbook(UnitEntityData owner, BlueprintAbility spell) {
+        internal static bool CanCastSpellFromSpellbook(UnitEntityData owner, BlueprintAbility spell) {
             if (spell == null || owner?.Spellbooks == null) return false;
             foreach (var book in owner.Spellbooks) {
                 int maxLevel = book.MaxSpellLevel;
