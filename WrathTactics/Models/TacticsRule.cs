@@ -55,6 +55,8 @@ namespace WrathTactics.Models {
         // only match the Spell branch because their GUIDs don't appear in inventory items).
         // Type-homogeneous — entries share the parent rule's Action.Type. Empty on legacy rules.
         [JsonProperty] public List<string> FallbackAbilityIds { get; set; } = new();
+        // CastDebuffGroup: the effect group whose strongest ally-safe option is cast (WTW-30). None on legacy rules.
+        [JsonProperty] public DebuffGroup DebuffGroup { get; set; } = DebuffGroup.None;
         [JsonProperty] public HealMode HealMode { get; set; } = HealMode.Any;
         [JsonProperty] public HealSourceMask HealSources { get; set; } = HealSourceMask.All;
         [JsonProperty] public HealEnergyType HealEnergy { get; set; } = HealEnergyType.Auto;
