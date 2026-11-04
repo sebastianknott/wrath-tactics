@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using Kingmaker.Enums;
+using Kingmaker.UnitLogic.Mechanics;
 using WrathTactics.Engine;
 using WrathTactics.Models;
 using Xunit;
@@ -131,6 +132,51 @@ namespace WrathTactics.Tests {
         [Fact]
         public void No_penetration_sources_sum_to_zero() {
             Assert.Equal(0, ConditionEvaluator.SumPenetration(new List<KeyValuePair<ModifierDescriptor, int>>()));
+        }
+
+        // SpellPenetrationBonus.Value is a ContextValue. Spell Penetration / Greater Spell Penetration are
+        // Simple, but Mythic Spell Penetration is not: its sub-feature reads Rank (mythic level / 2) or
+        // CasterProperty (mythic level). Anything non-Simple has to go through the game's own evaluation.
+        [Fact]
+        public void Simple_context_value_is_read_without_evaluating() {
+            bool evaluated = false;
+            int value = ConditionEvaluator.ContextPenetration(ContextValueType.Simple, 2, () => { evaluated = true; return 99; });
+            Assert.Equal(2, value);
+            Assert.False(evaluated);
+        }
+
+        [Theory]
+        [InlineData(ContextValueType.Rank)]
+        [InlineData(ContextValueType.CasterProperty)]
+        [InlineData(ContextValueType.Shared)]
+        public void Non_simple_context_value_is_evaluated(ContextValueType type) {
+            Assert.Equal(8, ConditionEvaluator.ContextPenetration(type, 0, () => 8));
+        }
+
+        // Ground truth from the combat log of the 2026-11-03 session: "Check: <d20 + modifiers>" where
+        // modifiers = Params.CasterLevel + the bonus sum (RuleSpellResistanceCheck.SpellPenetration).
+        // Mythic level of every companion was 8. Greater Spell Penetration turns the mythic bonus into
+        // the full mythic level (sub-feature "Upgrade"); without it half (sub-feature "Base").
+        // Before the fix the trace showed only the Simple-valued part ("bonus" column).
+        [Theory]
+        [InlineData("Nenio, Fireball", 20, 4, 8, 32)]
+        [InlineData("Ember, Hold Monster", 20, 8, 8, 36)]
+        [InlineData("Ember, Hellfire Ray", 21, 8, 8, 37)]
+        [InlineData("Camelia, no penetration feats", 20, 0, 0, 20)]
+        [InlineData("Sosiel, no penetration feats", 20, 0, 0, 20)]
+        public void Penetration_with_mythic_part_reproduces_the_game_modifiers(
+            string who, int cl, int simpleBonus, int mythicBonus, int gameModifiers) {
+            var sources = new List<KeyValuePair<ModifierDescriptor, int>> {
+                new KeyValuePair<ModifierDescriptor, int>(ModifierDescriptor.Feat, simpleBonus),
+                new KeyValuePair<ModifierDescriptor, int>(ModifierDescriptor.UntypedStackable, mythicBonus),
+            };
+            Assert.True(gameModifiers == cl + ConditionEvaluator.SumPenetration(sources), who);
+        }
+
+        // Nenio's Fireball against the 38-SR succubus: the old trace read -14, the game's own numbers give -6.
+        [Fact]
+        public void Nenio_fireball_margin_matches_the_combat_log() {
+            Assert.Equal(-6, ConditionEvaluator.SpellResistMargin(20, 12, 38));
         }
     }
 }

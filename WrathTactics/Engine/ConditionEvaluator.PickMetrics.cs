@@ -165,8 +165,7 @@ namespace WrathTactics.Engine {
         //  - SpellPenetrationBonus (Spell Penetration / Greater Spell Penetration): Value, Descriptor, optional RequiredFact
         //  - SpellPenetrationMythicBonus: mythic level (or half of it without the Greater fact)
         // Not modelled (document gap): BindAbilitiesToClass, AlliedSpellcaster, UnitUseAbility (niche
-        // class/monster mechanics that also call AddSpellPenetration), non-Simple ContextValues on
-        // SpellPenetrationBonus (all vanilla ones are Simple), PrimalMagicEssence and
+        // class/monster mechanics that also call AddSpellPenetration), PrimalMagicEssence and
         // UnitPartSpellResistanceCheckReplace (stat-based replacement check; no vanilla caster here).
         static int ComputePenetrationBonus(UnitEntityData caster) {
             var sources = new List<KeyValuePair<ModifierDescriptor, int>>();
@@ -183,8 +182,7 @@ namespace WrathTactics.Engine {
                 if (bp == null || !fact.IsActive) continue;
                 foreach (var c in bp.GetComponents<SpellPenetrationBonus>()) {
                     if (c.CheckFact && !caster.Descriptor.HasFact(c.RequiredFact)) continue;
-                    if (c.Value.ValueType != ContextValueType.Simple) continue;
-                    sources.Add(new KeyValuePair<ModifierDescriptor, int>(c.Descriptor, c.Value.Value));
+                    sources.Add(new KeyValuePair<ModifierDescriptor, int>(c.Descriptor, PenetrationValue(c, fact, caster)));
                 }
                 foreach (var c in bp.GetComponents<SpellPenetrationMythicBonus>()) {
                     int mythic = caster.Progression.MythicLevel;
@@ -192,6 +190,22 @@ namespace WrathTactics.Engine {
                         MythicPenetration(mythic, caster.HasFact(c.Greater))));
                 }
             }
+        }
+
+        // SpellPenetrationBonus.Value is a ContextValue. Spell Penetration / Greater Spell Penetration are Simple,
+        // Mythic Spell Penetration is not: its sub-features read Rank (mythic level / 2, no Greater) or
+        // CasterProperty (mythic level, with Greater). Non-Simple values go through the game's own
+        // ContextValue.Calculate, which is what SpellPenetrationBonus.OnEventAboutToTrigger calls with the
+        // fact's context (IL-verified; it only reads ranks / unit properties, nothing is rolled or raised).
+        internal static int ContextPenetration(ContextValueType type, int simpleValue, Func<int> calculate) {
+            return type == ContextValueType.Simple ? simpleValue : calculate();
+        }
+
+        static int PenetrationValue(SpellPenetrationBonus component, EntityFact fact, UnitEntityData caster) {
+            return ContextPenetration(component.Value.ValueType, component.Value.Value, () => {
+                var context = fact.MaybeContext;
+                return context != null ? component.Value.Calculate(context) : component.Value.Calculate(caster);
+            });
         }
 
         // Returns penetration − target SR for the rule's own [Then] ability (see the sentinels above).
@@ -230,7 +244,7 @@ namespace WrathTactics.Engine {
             }
 
             int margin = SpellResistMargin(checksSr, immune, cl, bonus, sr);
-            Log.Engine.Trace($"SpellResistMargin: '{ability.Name}' vs {target.CharacterName}: CL {cl} + bonus {bonus} - SR {sr} = {margin} (srCheck={checksSr}, immune={immune})");
+            Log.Engine.Trace($"SpellResistMargin: '{ability.Name}' vs {target.CharacterName}: CL {cl} + bonus {bonus} - SR {sr} = {margin} (srCheck={checksSr}, immune={immune}) caster={CurrentOwner.CharacterName}");
             return margin;
         }
 
